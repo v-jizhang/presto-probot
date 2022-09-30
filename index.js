@@ -21,9 +21,15 @@ module.exports = (app) => {
     app.log.info("A pull request has been created");
   });
 
-  app.on("commit_comment.created", async(context) => {
+  app.on(
+      //"commit_comment.created",
+      //"pull_request_review_comment.created",
+      //"pull_request_review_comment.edited",
+      //"discussion_comment.created",
+      "issue_comment.created",
+      async(context) => {
     app.log.info("commit_comment.created");
-    if(isKickOffTestComment(context)) {
+    if(isPullRequest(context) && isKickOffTestComment(context)) {
       app.log.info("Kick off failed tests");
       const repo = await context.repo();
       app.log.info(repo);
@@ -66,10 +72,16 @@ module.exports = (app) => {
   // To get your app running against GitHub, see:
   // https://probot.github.io/docs/development/
 
-  function isKickOffTestComment(context) {
+  function isKickOffTestComment(context)
+  {
     const kickoffTestPattern = /@bot[   ]+kick[   ]*off[  ]+test[s]?/i;
     const comment = context.payload.comment.body;
     app.log.info(comment);
     return kickoffTestPattern.test(comment);
+  }
+
+  function isPullRequest(context)
+  {
+    return (typeof(context.payload.issue.pull_request) != "undefined");
   }
 };
