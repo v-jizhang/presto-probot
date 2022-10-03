@@ -28,39 +28,49 @@ module.exports = (app) => {
       //"discussion_comment.created",
       "issue_comment.created",
       async(context) => {
-    app.log.info("commit_comment.created");
     if(isPullRequest(context) && isKickOffTestComment(context)) {
       app.log.info("Kick off failed tests");
       const repo = await context.repo();
       app.log.info(repo);
-      //const latestRuns = await context.octokit.actions.listWorkflowRunsForRepo({
+
+      const pullRequestNumber = context.payload.issue.number;
+      //const lastCommit = await context.octokit.pulls.listCommits({
       //  owner: repo.owner,
       //  repo: repo.repo,
+      //  pull_number: pullRequestNumber,
       //  per_page: 1,
       //});
-      //app.log.info(latestRuns);
+
+      const pullRequest = await context.octokit.pulls.get({
+        owner: repo.owner,
+        repo: repo.repo,
+        pull_number: pullRequestNumber,
+      });
+
+      app.log.info(pullRequest);
 
       const workflows = await context.octokit.actions.listRepoWorkflows(repo);
-      //app.log.info(workflows);
       let workflow;
       let lastWorkflowRun;
       for (let i = 0; i < workflows.data.total_count; i++) {
         workflow = workflows.data.workflows[i];
         app.log.info(workflow);
-        lastWorkflowRun = await context.octokit.actions.listWorkflowRuns({
-          owner: repo.owner,
-          repo: repo.repo,
-          workflow_id: workflow.id,
-          per_page: 1,
-        });
+        lastWorkflowRun = await getLastWorkflowRunByPullRequest(context, repo, workflow, pullRequest);
+
+        //lastWorkflowRun = await context.octokit.actions.listWorkflowRuns({
+        //  owner: repo.owner,
+        //  repo: repo.repo,
+        //  workflow_id: workflow.id,
+        //  per_page: 20,
+        //});
         app.log.info(lastWorkflowRun);
 
-        if (lastWorkflowRun.data.workflow_runs[0].status === "completed" &&
-            lastWorkflowRun.data.workflow_runs[0].conclusion != "success") {
+        if (lastWorkflowRun.status === "completed" &&
+            lastWorkflowRun.conclusion != "success") {
               context.octokit.actions.reRunWorkflowFailedJobs({
                 owner: repo.owner,
                 repo: repo.repo,
-                run_id: lastWorkflowRun.data.workflow_runs[0].id,
+                run_id: lastWorkflowRun.id,
               });
             }
       }
@@ -83,5 +93,34 @@ module.exports = (app) => {
   function isPullRequest(context)
   {
     return (typeof(context.payload.issue.pull_request) != "undefined");
+  }
+
+  async function getLastWorkflowRunByPullRequest(context, repo, workflow, pullRequest)
+  {
+    let pageNumber = 0;
+    let found = false;
+    let workflowRuns;
+    let workflowRun;
+    while (!found)
+    {
+      workflowRuns = await context.octokit.actions.listWorkflowRuns({
+        owner: repo.owner,
+        repo: repo.repo,
+        workflow_id: workflow.id,
+        per_page: 20,
+        page: pageNumber++,
+      });
+
+      for (let i = 0; i < workflowRuns.data.workflow_runs.length; i++) {
+        workflowRun = workflowRuns.data.workflow_runs[i];
+        app.log.info(workflowRun);
+        if (pullRequest.data.head.sha === workflowRun.head_sha) {
+          found = true;
+          break;
+        }
+      }
+    }
+
+    return workflowRun;
   }
 };
