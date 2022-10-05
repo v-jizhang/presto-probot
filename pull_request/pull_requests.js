@@ -1,12 +1,15 @@
+const base64 = require('js-base64').Base64;
+
 const { isKickOffTestComment } = require('../util/utils')
 const { getLastWorkflowRunByPullRequest } = require('../workflow/workflows')
+const { getCodeOwnersFileContent } = require('../repo/repos')
 
 function isPullRequest(issue)
 {
   return (typeof(issue.pull_request) != "undefined");
 }
 
-async function startFailedTests(app, context)
+async function rerunFailedTests(app, context)
 {
     if (isPullRequest(context.payload.issue) && isKickOffTestComment(context.payload.comment.body)) {
         app.log.info("Kick off failed tests");
@@ -46,4 +49,89 @@ async function startFailedTests(app, context)
     }
 }
 
-module.exports = { isPullRequest, startFailedTests }
+async function assignReviewersToPullRequest(context)
+{
+    const payload = context.payload;
+    if (payload.action === 'opened') {
+        const changedFiles = await getPullRequestChangedFiles(context);
+        const codeOwnersFileBase64 = await getCodeOwnersFileContent(context);
+        const codeOwnersFile = base64.decode(codeOwnersFileBase64.data.content);
+        const relatedProducts = await getpullRequestRelatedProducts(changedFiles);
+        requestReviewers(context, codeOwnersFile, relatedProducts);
+    }
+}
+
+async function getPullRequestChangedFiles(pullRequestContext)
+{
+    const repo = await pullRequestContext.repo();
+    const pullRequestNumber = pullRequestContext.payload.number;
+    return pullRequestContext.octokit.pulls.listFiles({
+        owner: repo.owner,
+        repo: repo.repo,
+        pull_number: pullRequestNumber,
+    });
+}
+
+async function getpullRequestRelatedProducts(changedFiles)
+{
+    const productRegx = /^(?<product>[a-z\-]+)\/[a-z].*$/;
+    const productSet = new Set();
+    for (let i = 0; i < changedFiles.data.length; i++) {
+        let filenamme = changedFiles.data[i].filename;
+        let productMatch = filenamme.match(productRegx);
+        if (typeof(productMatch.groups.product) != 'undefined') {
+            productSet.add(productMatch.groups.product)
+        }
+    }
+
+    return productSet;
+}
+
+async function requestReviewers(context, codeOwnersFile, relatedProducts)
+{
+    const productCodeOwnerRegx = /^\/(?<product>[a-z\-]+)\s+(?<owners>@.*)$/;
+    const codeOwnerRegx = /@(?<owner>[^@\s]+)/g;
+    const productCodeOwners = codeOwnersFile.split('\n');
+    const repo = await context.repo();
+
+    // Skip the title line
+    for (let i = 1; i < productCodeOwners.length; i++) {
+        let productOwnersMatch = productCodeOwners[i].match(productCodeOwnerRegx);
+        if (productOwnersMatch == null) {
+            continue;
+        }
+
+        let product;
+        if (typeof(productOwnersMatch.groups.product) != 'undefined' && typeof(productOwnersMatch.groups.owners) != 'undefined') {
+            product = productOwnersMatch.groups.product;
+            if (relatedProducts.has(product))
+            {
+                let ownersString = productOwnersMatch.groups.owners;
+                let ownersGroups = ownersString.matchAll(codeOwnerRegx);
+                let owners = [];
+                let j = 0;
+                for (let owner of ownersGroups) {
+                    owners[j++] = owner.groups.owner;
+                }
+
+                // Retry in case Secondary Rate Limits happens (https://docs.github.com/en/rest/overview/resources-in-the-rest-api#secondary-rate-limits)
+                let retry = 3;
+                let response;
+                do {
+                    // Sleep 2 seconds
+                    await new Promise(r => setTimeout(r, 2000));
+
+                    response = await context.octokit.pulls.requestReviewers({
+                            owner: repo.owner,
+                            repo: repo.repo,
+                            pull_number: context.payload.number,
+                            reviewers: owners,
+                    });
+                    retry--;
+                } while (retry > 0 && response.status == 403);
+            }
+        }
+    }
+}
+
+module.exports = { isPullRequest, rerunFailedTests, assignReviewersToPullRequest }

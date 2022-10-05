@@ -1,4 +1,4 @@
-const { startFailedTests } = require('./pull_request/pull_requests')
+const { rerunFailedTests, assignReviewersToPullRequest } = require('./pull_request/pull_requests')
 
 /**
  * This is the main entrypoint to your Probot app
@@ -19,7 +19,7 @@ module.exports = (app) => {
   */
 
   app.on("pull_request", async(context) => {
-    app.log.info("A pull request has been created");
+    assignReviewersToPullRequest(context);
   });
 
   app.on(
@@ -29,7 +29,7 @@ module.exports = (app) => {
       //"discussion_comment.created",
       "issue_comment.created",
       async(context) => {
-        startFailedTests(app, context);
+        rerunFailedTests(app, context);
   });
 
   app.log.info("Presto-bot is up and running!");
