@@ -1,0 +1,10 @@
+{
+    "_comment1": "excluded-reviewers is a list of github accounts that we want to exclude from reviewers.",
+    "excluded-reviewers": [
+        "reviewer1",
+        "reviewer2"
+    ],
+
+    "_comment2": "The number of months of a file history we check to get a list of authors.",
+    "file-history-months": 12
+}

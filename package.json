@@ -16,6 +16,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "config": "^3.3.8",
     "js-base64": "^3.7.2",
     "probot": "^12.2.4"
   },

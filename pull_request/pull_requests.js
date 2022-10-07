@@ -1,8 +1,7 @@
-const base64 = require('js-base64').Base64;
-
+const config = require('config')
 const { isKickOffTestComment } = require('../util/utils')
 const { getLastWorkflowRunByPullRequest } = require('../workflow/workflows')
-const { getCodeOwnersFileContent } = require('../repo/repos')
+const { getCodeOwnersFileContent, listRecentCommitsByFile } = require('../repo/repos')
 
 function isPullRequest(issue)
 {
@@ -39,9 +38,9 @@ async function rerunFailedTests(app, context)
         if (lastWorkflowRun.status === "completed" &&
             lastWorkflowRun.conclusion != "success") {
                 context.octokit.actions.reRunWorkflowFailedJobs({
-                owner: repo.owner,
-                repo: repo.repo,
-                run_id: lastWorkflowRun.id,
+                    owner: repo.owner,
+                    repo: repo.repo,
+                    run_id: lastWorkflowRun.id,
                 });
             }
         }
@@ -52,13 +51,35 @@ async function rerunFailedTests(app, context)
 async function assignReviewersToPullRequest(context)
 {
     const payload = context.payload;
+    const excludedReviewers = config.get('excluded-reviewers');
+    const exclusionSet = new Set(excludedReviewers);
     if (payload.action === 'opened') {
         const changedFiles = await getPullRequestChangedFiles(context);
-        const codeOwnersFileBase64 = await getCodeOwnersFileContent(context);
-        const codeOwnersFile = base64.decode(codeOwnersFileBase64.data.content);
+        const pullRequestAuthors = await getPullRequestAuthors(context);    // Authors of the pull request should be excluded from reviewers
+        const codeOwnersFile = await getCodeOwnersFileContent(context);
         const relatedProducts = await getpullRequestRelatedProducts(changedFiles);
-        requestReviewers(context, codeOwnersFile, relatedProducts);
+        const allExclusions = new Set([...exclusionSet, ...pullRequestAuthors]);
+        requestReviewersByCodeOwners(context, codeOwnersFile, relatedProducts, allExclusions);
+        requestReviewersByCommitHistory(context, changedFiles, allExclusions);
     }
+}
+
+async function getPullRequestAuthors(context)
+{
+    const repo = await context.repo();
+    const commits = await context.octokit.pulls.listCommits({
+        owner: repo.owner,
+        repo: repo.repo,
+        pull_number: context.payload.number,
+    });
+
+    const authors = new Set();
+    for (let i = 0; i < commits.data.length; i++) {
+        let author = commits.data[i].author.login;
+        authors.add(author);
+    }
+
+    return authors;
 }
 
 async function getPullRequestChangedFiles(pullRequestContext)
@@ -87,12 +108,11 @@ async function getpullRequestRelatedProducts(changedFiles)
     return productSet;
 }
 
-async function requestReviewers(context, codeOwnersFile, relatedProducts)
+async function requestReviewersByCodeOwners(context, codeOwnersFile, relatedProducts, reviewerExclusions)
 {
     const productCodeOwnerRegx = /^\/(?<product>[a-z\-]+)\s+(?<owners>@.*)$/;
     const codeOwnerRegx = /@(?<owner>[^@\s]+)/g;
     const productCodeOwners = codeOwnersFile.split('\n');
-    const repo = await context.repo();
 
     // Skip the title line
     for (let i = 1; i < productCodeOwners.length; i++) {
@@ -111,27 +131,57 @@ async function requestReviewers(context, codeOwnersFile, relatedProducts)
                 let owners = [];
                 let j = 0;
                 for (let owner of ownersGroups) {
-                    owners[j++] = owner.groups.owner;
+                    if (!reviewerExclusions.has(owner)) {
+                        owners[j++] = owner.groups.owner;
+                    }
                 }
 
-                // Retry in case Secondary Rate Limits happens (https://docs.github.com/en/rest/overview/resources-in-the-rest-api#secondary-rate-limits)
-                let retry = 3;
-                let response;
-                do {
-                    // Sleep 2 seconds
-                    await new Promise(r => setTimeout(r, 2000));
-
-                    response = await context.octokit.pulls.requestReviewers({
-                            owner: repo.owner,
-                            repo: repo.repo,
-                            pull_number: context.payload.number,
-                            reviewers: owners,
-                    });
-                    retry--;
-                } while (retry > 0 && response.status == 403);
+                requestReviewers(context, owners);
             }
         }
     }
+}
+
+async function requestReviewersByCommitHistory(context, changedFiles, reviewerExclusions)
+{
+    let authors = new Set();
+    for (let i = 0; i < changedFiles.data.length; i++) {
+        let filename = changedFiles.data[i].filename;
+        let commits = await listRecentCommitsByFile(context, filename);
+
+        for (let i = 0; i < commits.data.length; i++) {
+            let author = commits.data[i].author.login;
+            if (!reviewerExclusions.has(author)) {
+                authors.add(author);
+            }
+        }
+    }
+
+    requestReviewers(context, Array.from(authors));
+}
+
+async function requestReviewers(pullRequestContext, reviewers)
+{
+    if (reviewers.length == 0) {
+        return;
+    }
+    const repo = await pullRequestContext.repo();
+
+    // Retry in case Secondary Rate Limits happens (https://docs.github.com/en/rest/overview/resources-in-the-rest-api#secondary-rate-limits)
+    let retry = 3;
+    let response;
+    do {
+        // Sleep 2 seconds
+        await new Promise(r => setTimeout(r, 2000));
+
+        response = await pullRequestContext.octokit.pulls.requestReviewers({
+                owner: repo.owner,
+                repo: repo.repo,
+                pull_number: pullRequestContext.payload.number,
+                reviewers: reviewers,
+        });
+        retry--;
+    } while (retry > 0 && response.status == 403);
 }
 
 module.exports = { isPullRequest, rerunFailedTests, assignReviewersToPullRequest }
