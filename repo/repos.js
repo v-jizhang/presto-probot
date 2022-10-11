@@ -30,4 +30,28 @@ async function listRecentCommitsByFile(context, filename)
     return commits;
 }
 
-module.exports = { getCodeOwnersFileContent, listRecentCommitsByFile };
+async function listContributors(context)
+{
+    const repo = await context.repo();
+    const perPage = 100;
+    let pageNumber = 0;
+    const contributorLogins = new Set();
+    let contributors;
+
+    do {
+        contributors = await context.octokit.repos.listContributors({
+            owner: repo.owner,
+            repo: repo.repo,
+            per_page: perPage,
+            page: pageNumber++,
+        });
+
+        for (let i = 0; i < contributors.data.length; i++) {
+            contributorLogins.add(contributors.data[i].login);
+        }
+    } while (contributors.data.length > 0);
+
+    return contributorLogins;
+}
+
+module.exports = { getCodeOwnersFileContent, listRecentCommitsByFile, listContributors };

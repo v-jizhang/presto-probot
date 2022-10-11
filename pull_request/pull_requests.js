@@ -1,7 +1,7 @@
 const config = require('config')
 const { isKickOffTestComment } = require('../util/utils')
 const { getLastWorkflowRunByPullRequest } = require('../workflow/workflows')
-const { getCodeOwnersFileContent, listRecentCommitsByFile } = require('../repo/repos')
+const { getCodeOwnersFileContent, listRecentCommitsByFile, listContributors } = require('../repo/repos')
 
 function isPullRequest(issue)
 {
@@ -184,4 +184,31 @@ async function requestReviewers(pullRequestContext, reviewers)
     } while (retry > 0 && response.status == 403);
 }
 
-module.exports = { isPullRequest, rerunFailedTests, assignReviewersToPullRequest }
+async function welcomeNewContributors(context)
+{
+    const allConritbutors = await listContributors(context);
+    const pullRequestAuthors = await getPullRequestAuthors(context);
+    let newContributors = [];
+    pullRequestAuthors.forEach((value, key, set) => {
+        if (!allConritbutors.has(value)) {
+            newContributors.push(value);
+        }
+    });
+
+    if (newContributors.length > 0) {
+        const repo = await context.repo();
+        const pullRequestNumber = context.payload.number;
+        let welcomeMessage = 'Hello ' + newContributors.toString() + '! Welcome to Presto project!\n'
+                + 'Thank you and congrats for opening your first pull request. We will get back to you as soon as we can.\n'
+                + 'Please use [Contributing to Presto](https://github.com/prestodb/presto/blob/master/CONTRIBUTING.md) as your guidelines\n'
+                + "Thank you!";
+        context.octokit.issues.createComment({
+            owner: repo.owner,
+            repo: repo.repo,
+            issue_number: pullRequestNumber,
+            body: welcomeMessage,
+        });
+    }
+}
+
+module.exports = { isPullRequest, rerunFailedTests, assignReviewersToPullRequest, welcomeNewContributors }
