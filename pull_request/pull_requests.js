@@ -66,12 +66,7 @@ async function assignReviewersToPullRequest(context)
 
 async function getPullRequestAuthors(context)
 {
-    const repo = await context.repo();
-    const commits = await context.octokit.pulls.listCommits({
-        owner: repo.owner,
-        repo: repo.repo,
-        pull_number: context.payload.number,
-    });
+    const commits = await listCommitsByPullRequest(context);
 
     const authors = new Set();
     for (let i = 0; i < commits.data.length; i++) {
@@ -80,6 +75,18 @@ async function getPullRequestAuthors(context)
     }
 
     return authors;
+}
+
+async function listCommitsByPullRequest(context)
+{
+    const repo = await context.repo();
+    const commits = await context.octokit.pulls.listCommits({
+        owner: repo.owner,
+        repo: repo.repo,
+        pull_number: context.payload.number,
+    });
+
+    return commits;
 }
 
 async function getPullRequestChangedFiles(pullRequestContext)
@@ -211,4 +218,67 @@ async function welcomeNewContributors(context)
     }
 }
 
-module.exports = { isPullRequest, rerunFailedTests, assignReviewersToPullRequest, welcomeNewContributors }
+async function scanCommitMessages(context) {
+    const commits = await listCommitsByPullRequest(context);
+    let pullRequestCommitsGuidelineMessage = '';
+    for (let i = 0; i < commits.data.length; i++) {
+        const message = commits.data[i].commit.message;
+        const guidelineMessage = await processMessage(message);
+        if (!(typeof(guidelineMessage) === 'undefined')) {
+            pullRequestCommitsGuidelineMessage = `Some problems found in commit(${commits.data[i].sha}) message. Please\n` +
+                guidelineMessage;
+        }
+    }
+
+    if (pullRequestCommitsGuidelineMessage != '') {
+        const repo = await context.repo();
+        context.octokit.issues.createComment({
+            owner: repo.owner,
+            repo: repo.repo,
+            issue_number: context.payload.number,
+            body: pullRequestCommitsGuidelineMessage,
+        });
+    }
+}
+
+async function processMessage(message)
+{
+    let guidelineMessage;
+    const messageLines = message.split("\n");
+    const title = messageLines[0].trim();
+    // 1. Separate subject from body with a blank line
+    if (messageLines.length > 1 && messageLines[1] !== '') {
+        guidelineMessage = "separate subject from body with a blank line.\n";
+    }
+
+    // 2. Limit the subject line to 50 characters
+    if (title.length > 50) {
+        guidelineMessage += "limit the subject line to 50 characters.\n";
+    }
+
+    // 3. Capitalize the subject line
+    if (!(title.charAt(0) === title.charAt(0).toUpperCase())) {
+        guidelineMessage += "capitalize the subject line.\n";
+    }
+
+    // 4. Do not end the subject line with a period
+    if (title.charAt(title.length - 1) === '.') {
+        guidelineMessage += "do not end the subject line with a period.\n"
+    }
+
+    // 5. Use the imperative mood in the subject line
+
+    // 6. Wrap the body at 72 characters
+    for (let i = 1; i < messageLines.length; i++) {
+        if (messageLines[i].length > 72) {
+            guidelineMessage += "wrap the body at 72 characters";
+            break;
+        }
+    }
+
+    // 7. Use the body to explain what and why vs. how
+
+    return guidelineMessage;
+}
+
+module.exports = { isPullRequest, rerunFailedTests, assignReviewersToPullRequest, welcomeNewContributors, scanCommitMessages }

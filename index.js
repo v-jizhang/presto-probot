@@ -1,4 +1,4 @@
-const { rerunFailedTests, assignReviewersToPullRequest, welcomeNewContributors } = require('./pull_request/pull_requests')
+const { rerunFailedTests, assignReviewersToPullRequest, welcomeNewContributors, scanCommitMessages } = require('./pull_request/pull_requests')
 
 /**
  * This is the main entrypoint to your Probot app
@@ -12,14 +12,20 @@ module.exports = (app) => {
     });
     return context.octokit.issues.createComment(issueComment);
   });
+  
 
   app.on("push", async(context) => {
     app.log.info(context);
   });
+
+  app.on("pull_request.synchronize", async(context) => {
+    app.log.info(context);
+  });
   */
 
-  app.on("pull_request", async(context) => {
+  app.on("pull_request.opened", async(context) => {
     welcomeNewContributors(context);
+    scanCommitMessages(context);
     assignReviewersToPullRequest(context);
   });
 
