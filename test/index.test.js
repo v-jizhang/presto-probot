@@ -8,6 +8,7 @@ const payloadIssueOpened = require("./fixtures/issues.opened");
 const payloadPullRequestOpened = require("./fixtures/pull_request.opened.json");
 const contributors = require("./fixtures/contributors.json");
 const issueCreatedBody = { body: "Thanks for opening this issue!" };
+const test_messages = require("./fixtures/test_messages.json")
 const fs = require("fs");
 const path = require("path");
 const messages = require('../resources/messages.json');
@@ -73,28 +74,58 @@ describe("Presto Probot app", () => {
       //  },
       //})
       // Test that the welcome message is posted
+      .persist()
       .get("/repos/hiimbex/testing-things/contributors?per_page=100&page=0")
       .reply(200, contributors)
       .get("/repos/hiimbex/testing-things/contributors?per_page=100&page=1")
       .reply(200, [])
       .get("/repos/hiimbex/testing-things/pulls/11/commits")
       .reply(200, [
-          {
-            author: {
+        {
+          author: {
               login: "jinlinzh"
-            }
-          }
-        ])
+          },
+          commit: {}
+        }
+      ])
+      .get("/repos/hiimbex/testing-things/pulls/11/files")
+      .reply(200, [])
       .post("/repos/hiimbex/testing-things/issues/11/comments", (body) => {
         expect(body.body).toBe(util.format(messages["welcome-new-contributors"], "jinlinzh"));
         return true;
       })
       .reply(201);
 
-      await probot.receive({ name: "pull_request", payload: payloadPullRequestOpened });
+    await probot.receive({ name: "pull_request", payload: payloadPullRequestOpened });
 
-      expect(mock.pendingMocks()).toStrictEqual([]);
-    });
+    expect(mock.pendingMocks()).toStrictEqual([]);
+  });
+
+  test("Test commit message validation", async () => {
+    const mock = nock("https://api.github.com")
+      .persist()
+      .get("/repos/hiimbex/testing-things/contributors?per_page=100&page=0")
+      .reply(200, [])
+      .get("/repos/hiimbex/testing-things/pulls/11/commits")
+      .reply(200, [
+        {
+          commit: {
+            message: "fix a test failure.\nFixed test failure in AppTest Test case testAddition. This commit is also a test for presto-bot commit\nmessage guidelines.\n"
+          }
+        }
+      ])
+      .get("/repos/hiimbex/testing-things/pulls/11/files")
+      .reply(200, [])
+      .post("/repos/hiimbex/testing-things/issues/11/comments", (body) => {
+        expect(body.body).toBe(test_messages.commit_message_expected);
+        return true;
+      })
+      .reply(201);
+
+    await probot.receive({ name: "pull_request", payload: payloadPullRequestOpened });
+
+    expect(mock.pendingMocks()).toStrictEqual([]);
+  });
 
   afterEach(() => {
     nock.cleanAll();

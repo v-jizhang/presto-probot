@@ -57,6 +57,9 @@ async function assignReviewersToPullRequest(context)
     const exclusionSet = new Set(excludedReviewers);
     if (payload.action === 'opened') {
         const changedFiles = await getPullRequestChangedFiles(context);
+        if (changedFiles.data.length == 0) {
+            return;
+        }
         const pullRequestAuthors = await getPullRequestAuthors(context);    // Authors of the pull request should be excluded from reviewers
         const codeOwnersFile = await getCodeOwnersFileContent(context);
         const relatedProducts = await getpullRequestRelatedProducts(changedFiles);
@@ -196,6 +199,9 @@ async function requestReviewers(pullRequestContext, reviewers)
 async function welcomeNewContributors(context)
 {
     const allConritbutors = await listContributors(context);
+    if (allConritbutors.size == 0) {
+        return;
+    }
     const pullRequestAuthors = await getPullRequestAuthors(context);
     let newContributors = [];
     pullRequestAuthors.forEach((value, key, set) => {
@@ -242,6 +248,10 @@ async function scanCommitMessages(context) {
 
 async function processMessage(message)
 {
+    if (typeof(message) === 'undefined') {
+        return;
+    }
+
     let guidelineMessage;
     const messageLines = message.split("\n");
     const title = messageLines[0].trim();

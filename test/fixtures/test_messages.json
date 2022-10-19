@@ -1,0 +1,3 @@
+{
+    "commit_message_expected" : "Some problems found in commit(undefined) message. Please\n- separate subject from body with a blank line.\n- capitalize the subject line.\n- do not end the subject line with a period.\n- wrap the body at 72 characters"
+}
