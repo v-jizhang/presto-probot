@@ -5,7 +5,6 @@ const { rerunFailedTests, assignReviewersToPullRequest, welcomeNewContributors, 
  * @param {import('probot').Probot} app
  */
 module.exports = (app) => {
-  /*
   app.on("issues.opened", async (context) => {
     const issueComment = context.issue({
       body: "Thanks for opening this issue!",
@@ -13,7 +12,7 @@ module.exports = (app) => {
     return context.octokit.issues.createComment(issueComment);
   });
   
-
+/*
   app.on("push", async(context) => {
     app.log.info(context);
   });
@@ -24,9 +23,9 @@ module.exports = (app) => {
   */
 
   app.on("pull_request.opened", async(context) => {
-    welcomeNewContributors(context);
-    scanCommitMessages(context);
-    assignReviewersToPullRequest(context);
+    await welcomeNewContributors(context);
+    await scanCommitMessages(context);
+    await assignReviewersToPullRequest(context);
   });
 
   app.on(

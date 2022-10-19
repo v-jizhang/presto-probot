@@ -1,7 +1,9 @@
 const config = require('config')
+const util = require('node:util')
 const { isKickOffTestComment } = require('../util/utils')
 const { getLastWorkflowRunByPullRequest } = require('../workflow/workflows')
 const { getCodeOwnersFileContent, listRecentCommitsByFile, listContributors } = require('../repo/repos')
+const messages = require('../resources/messages.json');
 
 function isPullRequest(issue)
 {
@@ -205,11 +207,8 @@ async function welcomeNewContributors(context)
     if (newContributors.length > 0) {
         const repo = await context.repo();
         const pullRequestNumber = context.payload.number;
-        let welcomeMessage = 'Hello ' + newContributors.toString() + '! Welcome to Presto project!\n'
-                + 'Thank you and congrats for opening your first pull request. We will get back to you as soon as we can.\n'
-                + 'Please use [Contributing to Presto](https://github.com/prestodb/presto/blob/master/CONTRIBUTING.md) as your guidelines\n'
-                + "Thank you!";
-        context.octokit.issues.createComment({
+        let welcomeMessage = util.format(messages['welcome-new-contributors'], newContributors.toString());
+        await context.octokit.issues.createComment({
             owner: repo.owner,
             repo: repo.repo,
             issue_number: pullRequestNumber,
@@ -232,7 +231,7 @@ async function scanCommitMessages(context) {
 
     if (pullRequestCommitsGuidelineMessage != '') {
         const repo = await context.repo();
-        context.octokit.issues.createComment({
+        await context.octokit.issues.createComment({
             owner: repo.owner,
             repo: repo.repo,
             issue_number: context.payload.number,
@@ -248,22 +247,22 @@ async function processMessage(message)
     const title = messageLines[0].trim();
     // 1. Separate subject from body with a blank line
     if (messageLines.length > 1 && messageLines[1] !== '') {
-        guidelineMessage = "separate subject from body with a blank line.\n";
+        guidelineMessage = "- separate subject from body with a blank line.\n";
     }
 
     // 2. Limit the subject line to 50 characters
     if (title.length > 50) {
-        guidelineMessage += "limit the subject line to 50 characters.\n";
+        guidelineMessage += "- limit the subject line to 50 characters.\n";
     }
 
     // 3. Capitalize the subject line
     if (!(title.charAt(0) === title.charAt(0).toUpperCase())) {
-        guidelineMessage += "capitalize the subject line.\n";
+        guidelineMessage += "- capitalize the subject line.\n";
     }
 
     // 4. Do not end the subject line with a period
     if (title.charAt(title.length - 1) === '.') {
-        guidelineMessage += "do not end the subject line with a period.\n"
+        guidelineMessage += "- do not end the subject line with a period.\n"
     }
 
     // 5. Use the imperative mood in the subject line
@@ -271,7 +270,7 @@ async function processMessage(message)
     // 6. Wrap the body at 72 characters
     for (let i = 1; i < messageLines.length; i++) {
         if (messageLines[i].length > 72) {
-            guidelineMessage += "wrap the body at 72 characters";
+            guidelineMessage += "- wrap the body at 72 characters";
             break;
         }
     }
