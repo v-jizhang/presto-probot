@@ -12,6 +12,7 @@ const test_messages = require("./fixtures/test_messages.json")
 const fs = require("fs");
 const path = require("path");
 const messages = require('../resources/messages.json');
+const base64 = require('js-base64').Base64
 
 const privateKey = fs.readFileSync(
   path.join(__dirname, "fixtures/mock-cert.pem"),
@@ -103,7 +104,6 @@ describe("Presto Probot app", () => {
 
   test("Test commit message validation", async () => {
     const mock = nock("https://api.github.com")
-      .persist()
       .get("/repos/hiimbex/testing-things/contributors?per_page=100&page=0")
       .reply(200, [])
       .get("/repos/hiimbex/testing-things/pulls/11/commits")
@@ -121,6 +121,54 @@ describe("Presto Probot app", () => {
         return true;
       })
       .reply(201);
+
+    await probot.receive({ name: "pull_request", payload: payloadPullRequestOpened });
+
+    expect(mock.pendingMocks()).toStrictEqual([]);
+  });
+
+  test("Test assigning reviewers to a pull request", async () => {
+    const mock = nock("https://api.github.com")
+      .persist()
+      .filteringPath(/path=[^&]*&since=.*$/g, 'path=filename&since=2021')
+      .get("/repos/hiimbex/testing-things/commits?path=filename&since=2021")
+      .reply(200, [
+        {
+          author: {
+              login: "jinlinzh"
+          },
+          commit: {}
+        }
+      ])
+      .get("/repos/hiimbex/testing-things/contributors?per_page=100&page=0")
+      .reply(200, [])
+      .get("/repos/hiimbex/testing-things/pulls/11/files")
+      .reply(200, [
+        {
+          filename: "presto/src/hive.java"
+        },
+        {
+          filename: "presto-hudi/hudi.java"
+        }
+      ])
+      .get("/repos/hiimbex/testing-things/pulls/11/commits")
+      .reply(200, [
+        {
+          author: {
+              login: "jinlinzh"
+          },
+          commit: {}
+        }
+      ])
+      .get("/repos/hiimbex/testing-things/contents/%2FCODEOWNERS")
+      .reply(200, {
+        content: base64.encode("/** @presto-test/committers\n/presto-hudi @vinothchandar @7c00\n/presto-native-execution @prestodb/team-velox\n/presto @v-jizhang")})
+      .post("/repos/hiimbex/testing-things/pulls/11/requested_reviewers", (body) => {
+        expect(body.reviewers).toMatchObject(['vinothchandar', '7c00', 'v-jizhang']);
+        return true;
+      })
+      .reply(200);
+      
 
     await probot.receive({ name: "pull_request", payload: payloadPullRequestOpened });
 

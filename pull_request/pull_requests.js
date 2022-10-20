@@ -64,8 +64,11 @@ async function assignReviewersToPullRequest(context)
         const codeOwnersFile = await getCodeOwnersFileContent(context);
         const relatedProducts = await getpullRequestRelatedProducts(changedFiles);
         const allExclusions = new Set([...exclusionSet, ...pullRequestAuthors]);
-        requestReviewersByCodeOwners(context, codeOwnersFile, relatedProducts, allExclusions);
-        requestReviewersByCommitHistory(context, changedFiles, allExclusions);
+        const owners = await getReviewersByCodeOwners(context, codeOwnersFile, relatedProducts, allExclusions);
+        const authors = await getReviewersByCommitHistory(context, changedFiles, allExclusions);
+        const reviewers = new Set([...owners, ...authors]);
+
+        await requestReviewers(context, Array.from(reviewers));
     }
 }
 
@@ -120,12 +123,13 @@ async function getpullRequestRelatedProducts(changedFiles)
     return productSet;
 }
 
-async function requestReviewersByCodeOwners(context, codeOwnersFile, relatedProducts, reviewerExclusions)
+async function getReviewersByCodeOwners(context, codeOwnersFile, relatedProducts, reviewerExclusions)
 {
     const productCodeOwnerRegx = /^\/(?<product>[a-z\-]+)\s+(?<owners>@.*)$/;
     const codeOwnerRegx = /@(?<owner>[^@\s]+)/g;
     const productCodeOwners = codeOwnersFile.split('\n');
 
+    const owners = new Set();
     // Skip the title line
     for (let i = 1; i < productCodeOwners.length; i++) {
         let productOwnersMatch = productCodeOwners[i].match(productCodeOwnerRegx);
@@ -140,21 +144,20 @@ async function requestReviewersByCodeOwners(context, codeOwnersFile, relatedProd
             {
                 let ownersString = productOwnersMatch.groups.owners;
                 let ownersGroups = ownersString.matchAll(codeOwnerRegx);
-                let owners = [];
-                let j = 0;
                 for (let owner of ownersGroups) {
                     if (!reviewerExclusions.has(owner)) {
-                        owners[j++] = owner.groups.owner;
+                        owners.add(owner.groups.owner);
                     }
                 }
 
-                requestReviewers(context, owners);
             }
         }
     }
+
+    return owners;
 }
 
-async function requestReviewersByCommitHistory(context, changedFiles, reviewerExclusions)
+async function getReviewersByCommitHistory(context, changedFiles, reviewerExclusions)
 {
     let authors = new Set();
     for (let i = 0; i < changedFiles.data.length; i++) {
@@ -169,7 +172,7 @@ async function requestReviewersByCommitHistory(context, changedFiles, reviewerEx
         }
     }
 
-    requestReviewers(context, Array.from(authors));
+    return authors;
 }
 
 async function requestReviewers(pullRequestContext, reviewers)
