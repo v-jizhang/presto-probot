@@ -35,7 +35,7 @@ module.exports = (app) => {
       //"discussion_comment.created",
       "issue_comment.created",
       async(context) => {
-        rerunFailedTests(app, context);
+        await rerunFailedTests(app, context);
   });
 
   app.log.info("Presto-bot is up and running!");

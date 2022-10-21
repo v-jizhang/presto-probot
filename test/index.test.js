@@ -6,6 +6,7 @@ const { Probot, ProbotOctokit } = require("probot");
 // Requiring our fixtures
 const payloadIssueOpened = require("./fixtures/issues.opened");
 const payloadPullRequestOpened = require("./fixtures/pull_request.opened.json");
+const payloadPullRequestCommentCreated = require('./fixtures/pull_request_comment_created.json')
 const contributors = require("./fixtures/contributors.json");
 const issueCreatedBody = { body: "Thanks for opening this issue!" };
 const test_messages = require("./fixtures/test_messages.json")
@@ -39,6 +40,8 @@ describe("Presto Probot app", () => {
   });
 
   jest.setTimeout(3600000);
+
+  /*
   test("Create a comment when an issue is opened", async () => {
     const mock = nock("https://api.github.com")
       // Test that we correctly return a test token
@@ -62,6 +65,7 @@ describe("Presto Probot app", () => {
 
     expect(mock.pendingMocks()).toStrictEqual([]);
   });
+  */
 
   test("Test welcome new contributors when a pull request is opened", async () => {
     const mock = nock("https://api.github.com")
@@ -173,6 +177,49 @@ describe("Presto Probot app", () => {
     await probot.receive({ name: "pull_request", payload: payloadPullRequestOpened });
 
     expect(mock.pendingMocks()).toStrictEqual([]);
+  });
+
+  test(" Test re-run of failed jobs", async () => {
+    const mock = nock("https://api.github.com")
+      .get("/repos/hiimbex/testing-things/pulls/6")
+      .reply(200, {
+        head: {
+          sha: "a8db4bc6dea9c2db5194ea6a69c47e649326f5fd"
+        },
+        number: 6
+      })
+      .get("/repos/hiimbex/testing-things/actions/workflows")
+      .reply(200, {
+        total_count: 1,
+        workflows: [
+          {
+            id: 100,
+            name: "Test-Workflow"
+          }
+        ]
+      })
+      .get("/repos/hiimbex/testing-things/actions/workflows/100/runs?per_page=20&page=0")
+      .reply(200, {
+        total_count: 1,
+        workflow_runs: [
+          {
+            id: 101,
+            head_sha: "a8db4bc6dea9c2db5194ea6a69c47e649326f5fd",
+            status: "completed",
+            conclusion: "failed"
+          }
+        ]
+      })
+      .post("/repos/hiimbex/testing-things/actions/runs/101/rerun-failed-jobs", (body) => {
+        // This POST dose not have a body, the workflow_id is included in the URL.
+        expect(body).toBe('');
+        return true;
+      })
+      .reply(200);
+
+      await probot.receive({ name: "issue_comment", payload: payloadPullRequestCommentCreated });
+
+      expect(mock.pendingMocks()).toStrictEqual([]);
   });
 
   afterEach(() => {
