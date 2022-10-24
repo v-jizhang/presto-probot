@@ -10,6 +10,7 @@ const payloadPullRequestCommentCreated = require('./fixtures/pull_request_commen
 const contributors = require("./fixtures/contributors.json");
 const issueCreatedBody = { body: "Thanks for opening this issue!" };
 const test_messages = require("./fixtures/test_messages.json")
+const test_commit_files = require('./fixtures/commit_files.json')
 const fs = require("fs");
 const path = require("path");
 const messages = require('../resources/messages.json');
@@ -93,10 +94,14 @@ describe("Presto Probot app", () => {
           commit: {}
         }
       ])
+      .get("/repos/hiimbex/testing-things/commits/")
+      .reply(200, {
+        files:[]
+      })
       .get("/repos/hiimbex/testing-things/pulls/11/files")
       .reply(200, [])
       .post("/repos/hiimbex/testing-things/issues/11/comments", (body) => {
-        expect(body.body).toBe(util.format(messages["welcome-new-contributors"], "jinlinzh"));
+        expect(body.body).toMatch(util.format(messages["welcome-new-contributors"], "jinlinzh"));
         return true;
       })
       .reply(201);
@@ -113,15 +118,20 @@ describe("Presto Probot app", () => {
       .get("/repos/hiimbex/testing-things/pulls/11/commits")
       .reply(200, [
         {
+          sha: "10fa8d568f51f63bc1143cb4383d9a3ca7f920a2",
           commit: {
             message: "fix a test failure.\nFixed test failure in AppTest Test case testAddition. This commit is also a test for presto-bot commit\nmessage guidelines.\n"
           }
         }
       ])
+      .get("/repos/hiimbex/testing-things/commits/10fa8d568f51f63bc1143cb4383d9a3ca7f920a2")
+      .reply(200, {
+        files: test_commit_files
+      })
       .get("/repos/hiimbex/testing-things/pulls/11/files")
       .reply(200, [])
       .post("/repos/hiimbex/testing-things/issues/11/comments", (body) => {
-        expect(body.body).toBe(test_messages.commit_message_expected);
+        expect(body.body).toMatch(test_messages.commit_message_expected);
         return true;
       })
       .reply(201);
@@ -144,6 +154,10 @@ describe("Presto Probot app", () => {
           commit: {}
         }
       ])
+      .get("/repos/hiimbex/testing-things/commits/")
+      .reply(200, {
+        files:[]
+      })
       .get("/repos/hiimbex/testing-things/contributors?per_page=100&page=0")
       .reply(200, [])
       .get("/repos/hiimbex/testing-things/pulls/11/files")

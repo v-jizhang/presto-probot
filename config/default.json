@@ -6,5 +6,8 @@
     ],
 
     "_comment2": "The number of months of a file history we check to get a list of authors.",
-    "file-history-months": 12
+    "file-history-months": 12,
+
+    "_comment2": "The maximun number of files a commit should have changed.",
+    "max-number-of-files-per-commit": 50
 }

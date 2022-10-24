@@ -54,4 +54,16 @@ async function listContributors(context)
     return contributorLogins;
 }
 
-module.exports = { getCodeOwnersFileContent, listRecentCommitsByFile, listContributors };
+async function getCommitFiles(context, commit)
+{
+    const repo = await context.repo();
+    const commitData = await context.octokit.repos.getCommit({
+        owner: repo.owner,
+        repo: repo.repo,
+        ref: commit.sha
+    });
+
+    return commitData.data.files;
+}
+
+module.exports = { getCodeOwnersFileContent, listRecentCommitsByFile, listContributors, getCommitFiles };

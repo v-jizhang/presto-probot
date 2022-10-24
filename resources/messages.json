@@ -1,3 +1,4 @@
 {
-    "welcome-new-contributors": "Hello %s! Welcome to Presto project!\nThank you and congrats for opening your first pull request. We will get back to you as soon as we can.\nPlease use [Contributing to Presto](https://github.com/prestodb/presto/blob/master/CONTRIBUTING.md) as your guidelines\nThank you!"
+    "welcome-new-contributors": "Hello %s! Welcome to Presto project!\nThank you and congrats for opening your first pull request. We will get back to you as soon as we can.\nPlease use [Contributing to Presto](https://github.com/prestodb/presto/blob/master/CONTRIBUTING.md) as your guidelines\nThank you!",
+    "commit-number-changed-files-exceeds": "\n- The commit %s has %d changed files, please consider splitting it to mutiple commits."
 }
