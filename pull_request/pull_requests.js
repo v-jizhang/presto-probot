@@ -2,7 +2,7 @@ const config = require('config')
 const util = require('node:util')
 const { isKickOffTestComment } = require('../util/utils')
 const { getLastWorkflowRunByPullRequest } = require('../workflow/workflows')
-const { getCodeOwnersFileContent, listRecentCommitsByFile, listContributors } = require('../repo/repos')
+const { getCodeOwnersFileContent, listRecentCommitsByFile, listContributors, getCommitFiles } = require('../repo/repos')
 const messages = require('../resources/messages.json');
 
 function isPullRequest(issue)
@@ -225,16 +225,26 @@ async function welcomeNewContributors(context)
     }
 }
 
-async function scanCommitMessages(context) {
+async function validateCommits(context) {
     const commits = await listCommitsByPullRequest(context);
+    const maxNumberOfFilesInACommit = config.get('max-number-of-files-per-commit');
     let pullRequestCommitsGuidelineMessage = '';
+    let commitNumberOfFilesLimitMessage = '';
     for (let i = 0; i < commits.data.length; i++) {
+        const commitFiles = await getCommitFiles(context, commits.data[i]);
+        if (commitFiles.length > maxNumberOfFilesInACommit) {
+            commitNumberOfFilesLimitMessage += util.format(messages['commit-number-changed-files-exceeds'], commits.data[i].sha, commitFiles.length);
+        }
         const message = commits.data[i].commit.message;
         const guidelineMessage = await processMessage(message);
         if (!(typeof(guidelineMessage) === 'undefined')) {
             pullRequestCommitsGuidelineMessage = `Some problems found in commit(${commits.data[i].sha}) message. Please\n` +
                 guidelineMessage;
         }
+    }
+
+    if (commitNumberOfFilesLimitMessage != '') {
+        pullRequestCommitsGuidelineMessage += commitNumberOfFilesLimitMessage + '\n';
     }
 
     if (pullRequestCommitsGuidelineMessage != '') {
@@ -292,4 +302,4 @@ async function processMessage(message)
     return guidelineMessage;
 }
 
-module.exports = { isPullRequest, rerunFailedTests, assignReviewersToPullRequest, welcomeNewContributors, scanCommitMessages }
+module.exports = { isPullRequest, rerunFailedTests, assignReviewersToPullRequest, welcomeNewContributors, validateCommits }

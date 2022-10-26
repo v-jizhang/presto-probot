@@ -1,3 +1,3 @@
 {
-    "commit_message_expected" : "Some problems found in commit(undefined) message. Please\n- separate subject from body with a blank line.\n- capitalize the subject line.\n- do not end the subject line with a period.\n- wrap the body at 72 characters"
+    "commit_message_expected" : "Some problems found in commit(10fa8d568f51f63bc1143cb4383d9a3ca7f920a2) message. Please\n- separate subject from body with a blank line.\n- capitalize the subject line.\n- do not end the subject line with a period.\n- wrap the body at 72 characters\n- The commit 10fa8d568f51f63bc1143cb4383d9a3ca7f920a2 has 70 changed files, please consider splitting it to mutiple commits.\n"
 }
