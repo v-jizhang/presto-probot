@@ -4,8 +4,9 @@ const { rerunFailedTests, assignReviewersToPullRequest, welcomeNewContributors, 
  * This is the main entrypoint to your Probot app
  * @param {import('probot').Probot} app
  */
-/*
+
 module.exports = (app) => {
+  /*
   app.on("issues.opened", async (context) => {
     const issueComment = context.issue({
       body: "Thanks for opening this issue!",
