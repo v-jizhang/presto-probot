@@ -4,6 +4,7 @@ const { rerunFailedTests, assignReviewersToPullRequest, welcomeNewContributors, 
  * This is the main entrypoint to your Probot app
  * @param {import('probot').Probot} app
  */
+/*
 module.exports = (app) => {
   app.on("issues.opened", async (context) => {
     const issueComment = context.issue({
@@ -12,7 +13,7 @@ module.exports = (app) => {
     return context.octokit.issues.createComment(issueComment);
   });
   
-/*
+
   app.on("push", async(context) => {
     app.log.info(context);
   });
@@ -29,10 +30,10 @@ module.exports = (app) => {
   });
 
   app.on(
-      //"commit_comment.created",
+      //["commit_comment.created",
       //"pull_request_review_comment.created",
       //"pull_request_review_comment.edited",
-      //"discussion_comment.created",
+      //"discussion_comment.created",]
       "issue_comment.created",
       async(context) => {
         await rerunFailedTests(app, context);
