@@ -269,22 +269,22 @@ async function processMessage(message)
     const title = messageLines[0].trim();
     // 1. Separate subject from body with a blank line
     if (messageLines.length > 1 && messageLines[1] !== '') {
-        guidelineMessage = "- separate subject from body with a blank line.\n";
+        guidelineMessage = messages["separate-subject-from-body"];
     }
 
     // 2. Limit the subject line to 50 characters
     if (title.length > 50) {
-        guidelineMessage += "- limit the subject line to 50 characters.\n";
+        guidelineMessage += messages["limit-subject-line"];
     }
 
     // 3. Capitalize the subject line
     if (!(title.charAt(0) === title.charAt(0).toUpperCase())) {
-        guidelineMessage += "- capitalize the subject line.\n";
+        guidelineMessage += messages["capitalize-subject-line"];
     }
 
     // 4. Do not end the subject line with a period
     if (title.charAt(title.length - 1) === '.') {
-        guidelineMessage += "- do not end the subject line with a period.\n"
+        guidelineMessage += messages["subject-no-period"];
     }
 
     // 5. Use the imperative mood in the subject line
@@ -292,7 +292,7 @@ async function processMessage(message)
     // 6. Wrap the body at 72 characters
     for (let i = 1; i < messageLines.length; i++) {
         if (messageLines[i].length > 72) {
-            guidelineMessage += "- wrap the body at 72 characters";
+            guidelineMessage += messages["wrap-commit-message"];
             break;
         }
     }
