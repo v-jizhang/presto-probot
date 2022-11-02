@@ -20,6 +20,7 @@ module.exports = (app) => {
   });
   */
 
+  /*
   app.on("pull_request.synchronize", async(context) => {
     app.log.info(context);
   });
@@ -29,7 +30,7 @@ module.exports = (app) => {
     await validateCommits(context);
     await assignReviewersToPullRequest(context);
   });
-
+*/
   app.on(
       //["commit_comment.created",
       //"pull_request_review_comment.created",
