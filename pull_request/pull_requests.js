@@ -29,14 +29,14 @@ async function rerunFailedTests(app, context)
         const workflows = await context.octokit.actions.listRepoWorkflows(repo);
         let workflow;
         let lastWorkflowRun;
-        for (let i = 0; i < workflows.data.total_count; i++) {
+        for (let i = 0; i < workflows.data.workflows.length; i++) {
             workflow = workflows.data.workflows[i];
             //app.log.info(workflow);
             lastWorkflowRun = await getLastWorkflowRunByPullRequest(context, repo, workflow, pullRequest);
   
             //app.log.info(lastWorkflowRun);
   
-            if (lastWorkflowRun.status === "completed" &&
+            if (typeof(lastWorkflowRun) != 'undefined' && lastWorkflowRun.status === "completed" &&
                     lastWorkflowRun.conclusion != "success") {
                 const response = await context.octokit.actions.reRunWorkflowFailedJobs({
                     owner: repo.owner,

@@ -14,6 +14,10 @@ async function getLastWorkflowRunByPullRequest(context, repo, workflow, pullRequ
         page: pageNumber++,
       });
 
+      if (workflowRuns.data.workflow_runs.length == 0) {
+        // No more runs
+        return;
+      }
       for (let i = 0; i < workflowRuns.data.workflow_runs.length; i++) {
         workflowRun = workflowRuns.data.workflow_runs[i];
         if (pullRequest.data.head.sha === workflowRun.head_sha) {
