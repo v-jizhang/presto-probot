@@ -208,7 +208,8 @@ describe("Presto Probot app", () => {
         workflows: [
           {
             id: 100,
-            name: "Test-Workflow"
+            name: "Test-Workflow",
+            state: "active"
           }
         ]
       })
@@ -219,6 +220,7 @@ describe("Presto Probot app", () => {
           {
             id: 101,
             head_sha: "a8db4bc6dea9c2db5194ea6a69c47e649326f5fd",
+            event: 'pull_request',
             status: "completed",
             conclusion: "failed"
           }

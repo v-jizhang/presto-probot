@@ -31,6 +31,11 @@ async function rerunFailedTests(app, context)
         let lastWorkflowRun;
         for (let i = 0; i < workflows.data.workflows.length; i++) {
             workflow = workflows.data.workflows[i];
+
+            // skip inactive and cleanup workflow
+            if (workflow.state != 'active' || workflow.name == 'cleanup') {
+                continue;
+            }
             //app.log.info(workflow);
             lastWorkflowRun = await getLastWorkflowRunByPullRequest(context, repo, workflow, pullRequest);
   

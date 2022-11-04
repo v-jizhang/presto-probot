@@ -20,6 +20,12 @@ async function getLastWorkflowRunByPullRequest(context, repo, workflow, pullRequ
       }
       for (let i = 0; i < workflowRuns.data.workflow_runs.length; i++) {
         workflowRun = workflowRuns.data.workflow_runs[i];
+
+        if (workflowRun.event == 'schedule') {
+          // A run is triggered by 'schedule' means the worflow is a cron workflow, skip it
+          return;
+        }
+
         if (pullRequest.data.head.sha === workflowRun.head_sha) {
           found = true;
           break;
