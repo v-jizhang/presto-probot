@@ -43,12 +43,22 @@ async function rerunFailedTests(app, context)
   
             if (typeof(lastWorkflowRun) != 'undefined' && lastWorkflowRun.status === "completed" &&
                     lastWorkflowRun.conclusion != "success") {
-                const response = await context.octokit.actions.reRunWorkflowFailedJobs({
-                    owner: repo.owner,
-                    repo: repo.repo,
-                    run_id: lastWorkflowRun.id,
-                });
-                app.log.info('Started failed jobs of workflow run ' + workflow.name + '.');
+                let retry = 5;
+                let response;
+                do {
+                    response = await context.octokit.actions.reRunWorkflowFailedJobs({
+                        owner: repo.owner,
+                        repo: repo.repo,
+                        run_id: lastWorkflowRun.id,
+                    });
+                    retry--;
+                } while (retry > 0 && response.status == 403);
+                if (response.status == 403) {
+                    app.log.warn('Re-run workflow ' + workflow.name + ' failed, Please make sure the bot has workflow write permission.');
+                }
+                else {
+                    app.log.info('Started failed jobs of workflow run ' + workflow.name + '.');
+                }
             }
         }
     }
