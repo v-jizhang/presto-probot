@@ -4,6 +4,7 @@ const { isKickOffTestComment } = require('../util/utils')
 const { getLastWorkflowRunByPullRequest } = require('../workflow/workflows')
 const { getCodeOwnersFileContent, listRecentCommitsByFile, listContributors, getCommitFiles } = require('../repo/repos')
 const messages = require('../resources/messages.json');
+const pr_labels = require('../resources/pr_labels.json');
 
 function isPullRequest(issue)
 {
@@ -129,7 +130,7 @@ async function getpullRequestRelatedProducts(changedFiles)
     for (let i = 0; i < changedFiles.data.length; i++) {
         let filenamme = changedFiles.data[i].filename;
         let productMatch = filenamme.match(productRegx);
-        if (typeof(productMatch.groups.product) != 'undefined') {
+        if (productMatch != null && typeof(productMatch.groups.product) != 'undefined') {
             productSet.add(productMatch.groups.product)
         }
     }
@@ -317,4 +318,48 @@ async function processMessage(message)
     return guidelineMessage;
 }
 
-module.exports = { isPullRequest, rerunFailedTests, assignReviewersToPullRequest, welcomeNewContributors, validateCommits }
+
+async function tagPullRequest(context) {
+    const changedFiles = await getPullRequestChangedFiles(context);
+    if (changedFiles.data.length == 0) {
+        return;
+    }
+
+    const labels = new Set();
+    for (let i = 0; i < changedFiles.data.length; i++) {
+        let filename = changedFiles.data[i].filename;
+        for (let j = 0; j < pr_labels.length; j++) {
+            if (filename.includes(pr_labels[j].path)) {
+                labels.add(pr_labels[j].label);
+            }
+        }
+    }
+
+    if (labels.size == 0) {
+        return;
+    }
+
+    const repo = await context.repo();
+    labels.forEach(async (labelName, value, set) => {
+        let response = await context.octokit.issues.getLabel({
+            owner: repo.owner,
+            repo: repo.repo,
+            name: labelName,
+        }).catch(async () => {
+            // Create a label if not found
+            await context.octokit.issues.createLabel({
+                owner: repo.owner,
+                repo: repo.repo,
+                name: labelName,
+            });
+        });
+    });
+
+    await context.octokit.issues.addLabels({
+        owner: repo.owner,
+        repo: repo.repo,
+        issue_number: context.payload.number,
+        labels: Array.from(labels),
+    });
+}
+module.exports = { isPullRequest, rerunFailedTests, assignReviewersToPullRequest, welcomeNewContributors, validateCommits, tagPullRequest }

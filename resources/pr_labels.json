@@ -1,0 +1,235 @@
+[
+    {
+        "path": "presto/presto-accumulo/",
+        "label":"accumulo"
+    },
+    {
+        "path": "presto/analyzer/",
+        "label":"analyzer"
+    },
+    {
+        "path": "presto/atop/",
+        "label":"atop"},
+    {
+        "path": "presto/presto-bench",
+        "label": "benchmark"
+    },
+    {
+        "path": "presto/presto-bigquery/",
+        "label": "bigquery"
+    },
+    {
+        "path": "presto/blackhole/",
+        "label":"blackhole"
+    },
+    {
+        "path": "presto/presto-cache/",
+        "label":"caching"
+    },
+    {
+        "path": "presto/presto-cassandra/",
+        "label":"cassandra"},
+    {
+        "path": "presto/presto-clickhouse/",
+        "label":"clickhouse"
+    },
+    {
+        "path": "prestol/presto-delta/",
+        "label":"delta"},
+    {
+        "path": "presto/presto-main/src/main/java/com/facebook/presto/execution/",
+        "label":"distributed-execution"
+    },
+    {
+        "path": "presto/presto-docs/",
+        "label":"docs"
+    },
+    {
+        "path": "presto/presto-druid/",
+        "label": "druid"
+    },
+    {
+        "path": "presto/presto-elasticsearch/",
+        "label": "elasticsearch"
+    },
+    {
+        "path": "/functions/",
+        "label": "function"
+    },
+    {
+        "path": "presto/presto-google-sheets/",
+        "label": "google-sheets"
+    },
+    {
+        "path": "presto/presto-hive/",
+        "label":"hive-connector"
+    },
+    {
+        "path": "presto/presto-hive-metastore/",
+        "label": "hive-meta-store"
+    },
+    {
+        "path": "presto/presto-hudi/",
+        "label": "hudi"
+    },
+    {
+        "path": "presto/presto-iceberg/",
+        "label":"iceberg"
+    },
+    {
+        "path": "presto/presto-base-jdbc/",
+        "label": "jdbc"
+    },
+    {
+        "path": "presto/presto-jdbc/",
+        "label": "jdbc"
+    },
+    {
+        "path": "presto/presto-jmx/",
+        "label": "jmx"
+    },
+    {
+        "path": "presto/presto-kafka/",
+        "label":"kafka"
+    },
+    {
+        "path": "presto/presto-kudu/",
+        "label": "kudu"
+    },
+    {
+        "path": "presto/presto-lark-sheets/",
+        "label": "lark-sheets"
+    },
+    {
+        "path": "presto/presto-local-file/",
+        "label": "local-file"
+    },
+    {
+        "path": "presto/presto-ml/",
+        "label": "Machine Learning"
+    },
+    {
+        "path": "presto/presto-memory/",
+        "label": "memory-connector"
+    },
+    {
+        "path": "presto/presto-mongodb/",
+        "label": "mongodb"
+    },
+    {
+        "path": "presto/presto-mysql/",
+        "label": "mysql"
+    },
+    {
+        "path": "presto/presto-native-execution/",
+        "label": "native-execution"
+    },
+    {
+        "path": "presto/presto-oracle/",
+        "label": "oracle"
+    },
+    {
+        "path": "presto/presto-orc/",
+        "label": "orc"
+    },
+    {
+        "path": "presto/presto-parquet/",
+        "label": "parquet"
+    },
+    {
+        "path": "presto/presto-parser/",
+        "label": "parser"
+    },
+    {
+        "path": "presto/presto-pinot/",
+        "label": "pinot"
+    },
+    {
+        "path": "presto/presto-main/src/main/java/com/facebook/presto/sql/planner",
+        "label": "planner"
+    },
+    {
+        "path": "presto/presto-postgresql/",
+        "label": "postgresql"
+    },
+    {
+        "path": "presto/presto-product-tests/",
+        "label": "product-tests"
+    },
+    {
+        "path": "presto/presto-prometheus/",
+        "label": "prometheus"
+    },
+    {
+        "path": "/optimizer/",
+        "label": "Query Optimization"
+    },
+    {
+        "path": "/optimization/",
+        "label": "Query Optimization"
+    },
+    {
+        "path": "presto/presto-raptor/",
+        "label": "raptor"
+    },
+    {
+        "path": "presto/presto-rcfile/",
+        "label": "rcfile"
+    },
+    {
+        "path": "presto/presto-redis/",
+        "label": "redis"
+    },
+    {
+        "path": "presto/presto-redshift/",
+        "label": "redshfit"
+    },
+    {
+        "path": "presto/presto-main/src/main/java/com/facebook/presto/resourcemanager",
+        "label": "resource-management"
+    },
+    {
+        "path": "presto/presto-router/",
+        "label": "router"
+    },
+    {
+        "path": "presto/presto-main/src/main/java/com/facebook/presto/execution/scheduler",
+        "label": "scheduler"
+    },
+    {
+        "path": "presto/presto-main/src/main/java/com/facebook/presto/security",
+        "label": "security"
+    },
+    {
+        "path": "presto/presto/presto-password-authenticators/",
+        "label": "security"
+    },
+    {
+        "path": "presto/presto-server",
+        "label": "server"
+    },
+    {
+        "path": "presto/presto-spark",
+        "label": "spark"
+    },
+    {
+        "path": ".g4",
+        "label": "SQL Grammar"
+    },
+    {
+        "path": "presto/presto-sqlserver",
+        "label": "sql-server"
+    },
+    {
+        "path": "presto/presto-main/src/main/java/com/facebook/presto/execution/Task",
+        "label": "task-management"
+    },
+    {
+        "path": "presto/presto-thrift",
+        "label": "thrift"
+    },
+    {
+        "path": "presto/presto-verifier/",
+        "label": "verifier"
+    }
+]

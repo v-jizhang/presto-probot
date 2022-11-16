@@ -1,4 +1,4 @@
-const { rerunFailedTests, assignReviewersToPullRequest, welcomeNewContributors, validateCommits } = require('./pull_request/pull_requests')
+const { rerunFailedTests, assignReviewersToPullRequest, welcomeNewContributors, validateCommits, tagPullRequest } = require('./pull_request/pull_requests')
 
 /**
  * This is the main entrypoint to your Probot app
@@ -28,6 +28,7 @@ module.exports = (app) => {
     await welcomeNewContributors(context);
     await validateCommits(context);
     await assignReviewersToPullRequest(context);
+    await tagPullRequest(context);
   });
 
   app.on(

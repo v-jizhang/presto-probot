@@ -113,6 +113,7 @@ describe("Presto Probot app", () => {
 
   test("Test commit message validation", async () => {
     const mock = nock("https://api.github.com")
+      .persist()
       .get("/repos/hiimbex/testing-things/contributors?per_page=100&page=0")
       .reply(200, [])
       .get("/repos/hiimbex/testing-things/pulls/11/commits")
@@ -236,6 +237,64 @@ describe("Presto Probot app", () => {
       await probot.receive({ name: "issue_comment", payload: payloadPullRequestCommentCreated });
 
       expect(mock.pendingMocks()).toStrictEqual([]);
+  });
+
+  test("Test tag a pull request", async () => {
+    const mock = nock("https://api.github.com")
+      .persist()
+      .filteringPath(/path=[^&]*&since=.*$/g, 'path=filename&since=2021')
+      .get("/repos/hiimbex/testing-things/commits?path=filename&since=2021")
+      .reply(200, [])
+      .get("/repos/hiimbex/testing-things/contributors?per_page=100&page=0")
+      .reply(200, [])
+      .get("/repos/hiimbex/testing-things/pulls/11/commits")
+      .reply(200, [
+        {
+          author: {
+            login: "jinlinzh"
+          },
+          commit: {}
+        }
+      ])
+      .get("/repos/hiimbex/testing-things/commits/")
+      .reply(200, {
+        files:[]
+      })
+      .get("/repos/hiimbex/testing-things/pulls/11/files")
+      .reply(200, [
+        {
+          filename: "presto/src/hive.java"
+        },
+        {
+          filename: "presto/presto-hudi/hudi.java"
+        },
+        {
+          filename: "presto/presto-accumulo/accumulo.java"
+        }
+      ])
+      .get("/repos/hiimbex/testing-things/contents/%2FCODEOWNERS")
+      .reply(200, {content: ""})
+      .get("/repos/hiimbex/testing-things/labels/hudi")
+      .reply(200,
+        {
+          id: 1,
+          name: "hudi"
+        })
+      .get("/repos/hiimbex/testing-things/labels/accumulo")
+      .reply(200,
+        {
+          id: 2,
+          name: "accumulo"
+        })
+      .post("/repos/hiimbex/testing-things/issues/11/labels", (body) => {
+        expect(body.labels).toMatchObject(["hudi", "accumulo"]);
+        return true;
+      })
+      .reply(201);
+
+    await probot.receive({ name: "pull_request", payload: payloadPullRequestOpened });
+
+    expect(mock.pendingMocks()).toStrictEqual([]);
   });
 
   afterEach(() => {
