@@ -10,20 +10,19 @@ const insertIntoPullRequest = `INSERT INTO "pull_requests"
     merged_at=EXCLUDED.merged_at,
     status=EXCLUDED.status;`;
 
+const selectPullRequestBynumber = `SELECT * FROM pull_requests WHERE id = $1`;
+
 async function pullRequestClosed(context, app) {
   const client = await getDatabaseClient();
   const pullRequestNumber = context.payload.pull_request.number;
   const title = context.payload.pull_request.title;
-  const created_at = context.payload.pull_request.created_at;
-  const closed_at = context.payload.pull_request.closed_at;
-  const merged_at = context.payload.pull_request.merged_at;
-  let status = 'merged';
-  if (!context.payload.pull_request.merged) {
-    status = 'closed';
-  }
+  const createdAt = context.payload.pull_request.created_at;
+  const closedAt = context.payload.pull_request.closed_at;
+  const mergedAt = context.payload.pull_request.merged_at;
+  const status = context.payload.pull_request.state;
   
   client.query(insertIntoPullRequest,
-    [pullRequestNumber, title, created_at, closed_at, merged_at, status], async (err, res) => {
+    [pullRequestNumber, title, createdAt, closedAt, mergedAt, status], async (err, res) => {
     if (err) {
       app.log.error(`Insert into pull_requests failed:
           ${err.message}. 
@@ -33,4 +32,4 @@ async function pullRequestClosed(context, app) {
   });
 }
 
-module.exports = { pullRequestClosed, insertIntoPullRequest }
+module.exports = { pullRequestClosed, insertIntoPullRequest, selectPullRequestBynumber }
