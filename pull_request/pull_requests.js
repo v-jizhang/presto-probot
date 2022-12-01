@@ -353,6 +353,9 @@ async function tagPullRequest(context) {
                 name: labelName,
             }).catch(async (err) => {
                 // If already created, ignore the error
+                if (err.status != 422) {
+                    throw err;
+                }
             });
         });
     });
