@@ -330,7 +330,7 @@ async function tagPullRequest(context) {
         let filename = changedFiles.data[i].filename;
         for (let j = 0; j < pr_labels.length; j++) {
             if (filename.includes(pr_labels[j].path)) {
-                labels.add(pr_labels[j].label);
+                pr_labels[j].labels.forEach((label) => labels.add(label))
             }
         }
     }
@@ -351,6 +351,8 @@ async function tagPullRequest(context) {
                 owner: repo.owner,
                 repo: repo.repo,
                 name: labelName,
+            }).catch(async (err) => {
+                // If already created, ignore the error
             });
         });
     });
