@@ -1,5 +1,5 @@
 const { getDatabaseClient, rollback } = require('../database/postgresql')
-const { insertIntoPullRequest, selectPullRequestBynumber } = require('./pull_request_closed')
+const { insertIntoPullRequest, selectPullRequestBynumber } = require('./pull_request_event_received')
 
 const insertIntoPrReviews = `INSERT INTO "pr_reviews" 
     ("id", "pull_request_id", "submitted_at", "author", "state")
@@ -10,6 +10,8 @@ const insertIntoPrReviews = `INSERT INTO "pr_reviews"
     submitted_at=EXCLUDED.submitted_at,
     author=EXCLUDED.author,
     state=EXCLUDED.state`;
+const selectLastReview = `SELECT * FROM pr_reviews where pull_request_id = $1
+        ORDER BY submitted_at DESC LIMIT 1`;
 
 async function pullRequestReviewSubmitted(context, app) {
     const client = await getDatabaseClient();
@@ -62,4 +64,4 @@ async function pullRequestReviewSubmitted(context, app) {
     });
 }
 
-module.exports = {pullRequestReviewSubmitted}
+module.exports = {pullRequestReviewSubmitted, selectLastReview}

@@ -1,5 +1,5 @@
 const { getDatabaseClient, rollback} = require('../database/postgresql')
-const { insertIntoPullRequest, selectPullRequestBynumber } = require('./pull_request_closed')
+const { insertIntoPullRequest, selectPullRequestBynumber } = require('./pull_request_event_received')
 
 const insertIntoPrLabels = `INSERT INTO "pr_labels"
         ("id", "pull_request_id", "label")
@@ -8,6 +8,8 @@ const insertIntoPrLabels = `INSERT INTO "pr_labels"
         id=EXCLUDED.id,
         pull_request_id=EXCLUDED.pull_request_id,
         label=EXCLUDED.label;`;
+const deleteFromPrLabels = `DELETE FROM "pr_labels"
+        WHERE "pull_request_id" = $1 and "label" = $2`;
 
 async function pullrequestLabeled(context, app) {
     const client = await getDatabaseClient();
@@ -58,4 +60,19 @@ async function pullrequestLabeled(context, app) {
     });
 }
 
-module.exports = { pullrequestLabeled }
+async function pullrequestUnlabeled(context, app) {
+    const client = await getDatabaseClient();
+    const pullRequestId = context.payload.pull_request.number;
+    const label = context.payload.label.name;
+
+    client.query(deleteFromPrLabels,
+        [pullRequestId, label],
+        (err, res) => {
+            if (err) {
+                app.log.error(err.message);
+            }
+        }
+    );
+}
+
+module.exports = { pullrequestLabeled, pullrequestUnlabeled }

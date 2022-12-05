@@ -1,8 +1,9 @@
 const { rerunFailedTests, assignReviewersToPullRequest, welcomeNewContributors, validateCommits, tagPullRequest } = require('./pull_request/pull_requests')
-const { pullRequestClosed } = require('./statistics/pull_request_closed')
+const { pullRequestReceived } = require('./statistics/pull_request_event_received')
 const { creatTablesIfNotExist } = require('./database/create_tables')
 const { pullRequestReviewSubmitted } = require('./statistics/pull_request_reviews')
-const { pullrequestLabeled } = require('./statistics/pull_request_labels')
+const { pullrequestLabeled, pullrequestUnlabeled } = require('./statistics/pull_request_labels')
+const { pullRequestReviewRequested } = require('./statistics/pull_request_reviewer_requests')
 
 /**
  * This is the main entrypoint to your Probot app
@@ -37,6 +38,7 @@ module.exports = (app) => {
     await validateCommits(context);
     await assignReviewersToPullRequest(context);
     await tagPullRequest(context);
+    await pullRequestReceived(context, app);
   });
 
   app.on(
@@ -50,7 +52,7 @@ module.exports = (app) => {
   });
 
   app.on("pull_request.closed", async(context) => {
-    pullRequestClosed(context, app);
+    pullRequestReceived(context, app);
   });
 
   app.on("pull_request_review.submitted", async(context) => {
@@ -59,6 +61,14 @@ module.exports = (app) => {
 
   app.on("pull_request.labeled", async(context) => {
     pullrequestLabeled(context, app);
+  });
+
+  app.on("pull_request.unlabeled", async(context) => {
+    pullrequestUnlabeled(context, app);
+  });
+
+  app.on("pull_request.review_requested", async(context) => {
+    pullRequestReviewRequested(context, app);
   });
 
   app.log.info("Presto-bot is up and running!");

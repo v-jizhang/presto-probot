@@ -12,7 +12,7 @@ const insertIntoPullRequest = `INSERT INTO "pull_requests"
 
 const selectPullRequestBynumber = `SELECT * FROM pull_requests WHERE id = $1`;
 
-async function pullRequestClosed(context, app) {
+async function pullRequestReceived(context, app) {
   const client = await getDatabaseClient();
   const pullRequestNumber = context.payload.pull_request.number;
   const title = context.payload.pull_request.title;
@@ -32,4 +32,4 @@ async function pullRequestClosed(context, app) {
   });
 }
 
-module.exports = { pullRequestClosed, insertIntoPullRequest, selectPullRequestBynumber }
+module.exports = { pullRequestReceived, insertIntoPullRequest, selectPullRequestBynumber }
