@@ -173,6 +173,108 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION average_approval_time()
+    RETURNS interval
+    LANGUAGE plpgsql
+    AS
+$$
+DECLARE
+    avergeApprovalTime interval;
+BEGIN
+    SELECT avg(first_approval.first_approval_time - pr.created_at) INTO avergeApprovalTime
+    FROM
+    (SELECT pull_request_id, min(submitted_at) AS first_approval_time
+        FROM pr_reviews
+        WHERE pr_reviews.state = 'approved'
+        GROUP BY pull_request_id) AS first_approval
+    JOIN pull_requests pr ON pr.id = first_approval.pull_request_id;
+
+    -- RAISE INFO 'DEBUG: avergeApprovalTime: %s', avergeApprovalTime;
+
+    RETURN avergeApprovalTime;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION average_approval_time_by_label(labelName varchar(30))
+    RETURNS interval
+    LANGUAGE plpgsql
+    AS
+$$
+DECLARE
+    avergeApprovalTime interval;
+BEGIN
+    SELECT avg(first_approval.first_approval_time - pr.created_at) INTO avergeApprovalTime
+    FROM
+    (SELECT pull_request_id, min(submitted_at) AS first_approval_time
+        FROM pr_reviews
+        WHERE pr_reviews.state = 'approved'
+        GROUP BY pull_request_id) AS first_approval
+    JOIN pull_requests pr ON pr.id = first_approval.pull_request_id
+    JOIN pr_labels lb ON pr.id = lb.pull_request_id
+    WHERE lb.label = labelName;
+
+    -- RAISE INFO 'DEBUG: avergeApprovalTime: %s', avergeApprovalTime;
+
+    RETURN avergeApprovalTime;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION average_approval_percentile_time(p int)
+    RETURNS interval
+    LANGUAGE plpgsql
+    AS
+$$
+DECLARE
+    avergeApprovalTimeIntervals interval[];
+    numOfPrApprovals int;
+    i int;
+BEGIN
+    SELECT ARRAY_AGG(first_approval.first_approval_time - pr.created_at ORDER BY first_approval.first_approval_time - pr.created_at)
+    INTO avergeApprovalTimeIntervals
+    FROM
+    (SELECT pull_request_id, min(submitted_at) AS first_approval_time
+        FROM pr_reviews
+        WHERE pr_reviews.state = 'approved'
+        GROUP BY pull_request_id) AS first_approval
+    JOIN pull_requests pr ON pr.id = first_approval.pull_request_id;
+
+    --RAISE INFO 'DEBUG: avergeApprovalTimeIntervals: %s', avergeApprovalTimeIntervals;
+
+    SELECT array_length(avergeApprovalTimeIntervals, 1) INTO numOfPrApprovals;
+    i := 1 + numOfPrApprovals * p / 100;  -- 1 based
+    return avergeApprovalTimeIntervals[i];
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION average_approval_percentile_time_by_label(p int, labelName varchar(30))
+    RETURNS interval
+    LANGUAGE plpgsql
+    AS
+$$
+DECLARE
+    avergeApprovalTimeIntervals interval[];
+    numOfPrApprovals int;
+    i int;
+BEGIN
+    SELECT ARRAY_AGG(first_approval.first_approval_time - pr.created_at ORDER BY first_approval.first_approval_time - pr.created_at)
+    INTO avergeApprovalTimeIntervals
+    FROM
+    (SELECT pull_request_id, min(submitted_at) AS first_approval_time
+        FROM pr_reviews
+        WHERE pr_reviews.state = 'approved'
+        GROUP BY pull_request_id) AS first_approval
+    JOIN pull_requests pr ON pr.id = first_approval.pull_request_id
+    JOIN pr_labels lb ON pr.id = lb.pull_request_id
+    WHERE lb.label = labelName;
+
+    RAISE INFO 'DEBUG: avergeApprovalTimeIntervals: %s', avergeApprovalTimeIntervals;
+
+    SELECT array_length(avergeApprovalTimeIntervals, 1) INTO numOfPrApprovals;
+    i := 1 + numOfPrApprovals * p / 100;  -- 1 based
+    return avergeApprovalTimeIntervals[i];
+END;
+$$;
+
 DO $$
 <<pull_request_merge_time>>
 DECLARE
