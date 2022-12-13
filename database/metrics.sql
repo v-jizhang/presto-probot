@@ -275,6 +275,208 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION average_response_time()
+    RETURNS interval
+    LANGUAGE plpgsql
+    AS
+$$
+DECLARE
+    averageResponseTime interval;
+    responseTImes interval[];
+    rec record;
+    curPrId bigint := 0;
+    curResponseTime TIMESTAMPTZ;
+    count int := 1;
+BEGIN
+    FOR rec IN
+    (
+        SELECT id AS pull_request_id, created_at AS response_time FROM pull_requests
+
+        UNION ALL
+        SELECT pull_request_id, submitted_at FROM pr_reviews
+
+        UNION ALL
+        SELECT pull_request_id, updated_at FROM pr_review_requests
+
+        ORDER BY pull_request_id, response_time
+    )
+    LOOP
+        --RAISE INFO 'DEBUG: %, %', rec.pull_request_id, rec.response_time;
+        IF (rec.pull_request_id <> curPrId)
+        THEN
+            curPrId := rec.pull_request_id;
+            curResponseTime := rec.response_time;
+        ELSE
+            responseTImes[count] = rec.response_time - curResponseTime;
+            count := count + 1;
+            curResponseTime := rec.response_time;
+        END IF;
+    END LOOP;
+
+    --RAISE INFO 'DEBUG: %, responseTImes: %', array_length(responseTImes, 1), responseTImes;
+    SELECT AVG(unnest) INTO averageResponseTime
+    FROM unnest(responseTImes);
+
+    RETURN averageResponseTime;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION average_response_percentile_time(p int)
+    RETURNS interval
+    LANGUAGE plpgsql
+    AS
+$$
+DECLARE
+    responseTImes interval[];
+    rec record;
+    curPrId bigint := 0;
+    curResponseTime TIMESTAMPTZ;
+    count int := 1;
+    numOfResponseTimes int;
+    i int;
+BEGIN
+    FOR rec IN
+    (
+        SELECT id AS pull_request_id, created_at AS response_time FROM pull_requests
+
+        UNION ALL
+        SELECT pull_request_id, submitted_at FROM pr_reviews
+
+        UNION ALL
+        SELECT pull_request_id, updated_at FROM pr_review_requests
+
+        ORDER BY pull_request_id, response_time
+    )
+    LOOP
+        --RAISE INFO 'DEBUG: %, %', rec.pull_request_id, rec.response_time;
+        IF (rec.pull_request_id <> curPrId)
+        THEN
+            curPrId := rec.pull_request_id;
+            curResponseTime := rec.response_time;
+        ELSE
+            responseTImes[count] = rec.response_time - curResponseTime;
+            count := count + 1;
+            curResponseTime := rec.response_time;
+        END IF;
+    END LOOP;
+
+    --RAISE INFO 'DEBUG: %, responseTImes: %', array_length(responseTImes, 1), responseTImes;
+    SELECT ARRAY(SELECT unnest(responseTImes) ORDER BY 1) into responseTImes;
+
+    --RAISE INFO 'DEBUG: %, responseTImes: %', array_length(responseTImes, 1), responseTImes;
+    SELECT array_length(responseTImes, 1) INTO numOfResponseTimes;
+    i := 1 + numOfResponseTimes * p / 100;  -- 1 based
+    RETURN responseTImes[i];
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION average_response_time_by_label(labelName VARCHAR(30))
+    RETURNS interval
+    LANGUAGE plpgsql
+    AS
+$$
+DECLARE
+    averageResponseTime interval;
+    responseTImes interval[];
+    rec record;
+    curPrId bigint := 0;
+    curResponseTime TIMESTAMPTZ;
+    count int := 1;
+BEGIN
+    FOR rec IN
+    (
+        SELECT pr.id AS pull_request_id, pr.created_at AS response_time FROM pull_requests pr
+        JOIN pr_labels lb ON pr.id = lb.pull_request_id
+        WHERE lb.label = labelName
+
+        UNION
+        SELECT r.pull_request_id, r.submitted_at FROM pr_reviews r
+        JOIN pr_labels lb ON r.pull_request_id = lb.pull_request_id
+        WHERE lb.label = labelName
+
+        UNION
+        SELECT r.pull_request_id, r.updated_at FROM pr_review_requests r
+        JOIN pr_labels lb ON r.pull_request_id = lb.pull_request_id
+        WHERE lb.label = labelName
+
+        ORDER BY pull_request_id, response_time
+    )
+    LOOP
+        --RAISE INFO 'DEBUG: %, %', rec.pull_request_id, rec.response_time;
+        IF (rec.pull_request_id <> curPrId)
+        THEN
+            curPrId := rec.pull_request_id;
+            curResponseTime := rec.response_time;
+        ELSE
+            responseTImes[count] = rec.response_time - curResponseTime;
+            count := count + 1;
+            curResponseTime := rec.response_time;
+        END IF;
+    END LOOP;
+
+    --RAISE INFO '%, responseTImes: %', array_length(responseTImes, 1), responseTImes;
+    SELECT AVG(unnest) INTO averageResponseTime
+    FROM unnest(responseTImes);
+
+    RETURN averageResponseTime;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION average_response_percentile_time_by_label(p int, labelName VARCHAR(30))
+    RETURNS interval
+    LANGUAGE plpgsql
+    AS
+$$
+DECLARE
+    responseTImes interval[];
+    rec record;
+    curPrId bigint := 0;
+    curResponseTime TIMESTAMPTZ;
+    count int := 1;
+    numOfResponseTimes int;
+    i int;
+BEGIN
+    FOR rec IN
+    (
+        SELECT pr.id AS pull_request_id, pr.created_at AS response_time FROM pull_requests pr
+        JOIN pr_labels lb ON pr.id = lb.pull_request_id
+        WHERE lb.label = labelName
+
+        UNION ALL
+        SELECT r.pull_request_id, r.submitted_at FROM pr_reviews r
+        JOIN pr_labels lb ON r.pull_request_id = lb.pull_request_id
+        WHERE lb.label = labelName
+
+        UNION ALL
+        SELECT r.pull_request_id, r.updated_at FROM pr_review_requests r
+        JOIN pr_labels lb ON r.pull_request_id = lb.pull_request_id
+        WHERE lb.label = labelName
+
+        ORDER BY pull_request_id, response_time
+    )
+    LOOP
+        RAISE INFO 'DEBUG: %, %', rec.pull_request_id, rec.response_time;
+        IF (rec.pull_request_id <> curPrId)
+        THEN
+            curPrId := rec.pull_request_id;
+            curResponseTime := rec.response_time;
+        ELSE
+            responseTImes[count] = rec.response_time - curResponseTime;
+            count := count + 1;
+            curResponseTime := rec.response_time;
+        END IF;
+    END LOOP;
+
+    --RAISE INFO 'DEBUG: %, responseTImes: %', array_length(responseTImes, 1), responseTImes;
+    SELECT ARRAY(SELECT unnest(responseTImes) ORDER BY 1) into responseTImes;
+
+    --RAISE INFO 'DEBUG: %, responseTImes: %', array_length(responseTImes, 1), responseTImes;
+    SELECT array_length(responseTImes, 1) INTO numOfResponseTimes;
+    i := 1 + numOfResponseTimes * p / 100;  -- 1 based
+    RETURN responseTImes[i];
+END;
+$$;
+
 DO $$
 <<pull_request_merge_time>>
 DECLARE
@@ -288,5 +490,5 @@ BEGIN
     SELECT pr_merge_percentile_time(50) INTO p50;
     SELECT pr_merge_percentile_time(90) INTO p90;
     RAISE INFO  'P50: %, P90: %', p50, p90;
-END; $$
-
+END;
+$$
