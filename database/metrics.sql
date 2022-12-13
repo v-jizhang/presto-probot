@@ -56,7 +56,7 @@ BEGIN
 
     SELECT array_length(prMergeTimeIntervals, 1) INTO numOfPRs;
     i := 1 + numOfPRs * p / 100;  -- 1 based
-    return prMergeTimeIntervals[i];
+    RETURN prMergeTimeIntervals[i];
 END;
 $$;
 
@@ -79,7 +79,7 @@ BEGIN
 
     SELECT array_length(prMergeTimeIntervals, 1) INTO numOfPRs;
     i := 1 + numOfPRs * p / 100;  -- 1 based
-    return prMergeTimeIntervals[i];
+    RETURN prMergeTimeIntervals[i];
 END;
 $$;
 
@@ -144,7 +144,7 @@ BEGIN
 
     SELECT array_length(prFirstReviewTimeIntervals, 1) INTO numOfPrReviewed;
     i := 1 + numOfPrReviewed * p / 100;  -- 1 based
-    return prFirstReviewTimeIntervals[i];
+    RETURN prFirstReviewTimeIntervals[i];
 END;
 $$;
 
@@ -169,7 +169,7 @@ BEGIN
 
     SELECT array_length(prFirstReviewTimeIntervals, 1) INTO numOfPrReviewed;
     i := 1 + numOfPrReviewed * p / 100;  -- 1 based
-    return prFirstReviewTimeIntervals[i];
+    RETURN prFirstReviewTimeIntervals[i];
 END;
 $$;
 
@@ -242,7 +242,7 @@ BEGIN
 
     SELECT array_length(avergeApprovalTimeIntervals, 1) INTO numOfPrApprovals;
     i := 1 + numOfPrApprovals * p / 100;  -- 1 based
-    return avergeApprovalTimeIntervals[i];
+    RETURN avergeApprovalTimeIntervals[i];
 END;
 $$;
 
@@ -271,7 +271,7 @@ BEGIN
 
     SELECT array_length(avergeApprovalTimeIntervals, 1) INTO numOfPrApprovals;
     i := 1 + numOfPrApprovals * p / 100;  -- 1 based
-    return avergeApprovalTimeIntervals[i];
+    RETURN avergeApprovalTimeIntervals[i];
 END;
 $$;
 
@@ -455,7 +455,7 @@ BEGIN
         ORDER BY pull_request_id, response_time
     )
     LOOP
-        RAISE INFO 'DEBUG: %, %', rec.pull_request_id, rec.response_time;
+        --RAISE INFO 'DEBUG: %, %', rec.pull_request_id, rec.response_time;
         IF (rec.pull_request_id <> curPrId)
         THEN
             curPrId := rec.pull_request_id;
@@ -478,17 +478,33 @@ END;
 $$;
 
 DO $$
-<<pull_request_merge_time>>
+<<metric_functions>>
 DECLARE
-    avergeMergeTime interval;
-    p50 interval;
-    p90 interval;
 BEGIN
-    SELECT average_merge_time() INTO avergeMergeTime;
-    RAISE INFO 'Average pull request merge time: %', avergeMergeTime;
-
-    SELECT pr_merge_percentile_time(50) INTO p50;
-    SELECT pr_merge_percentile_time(90) INTO p90;
-    RAISE INFO  'P50: %, P90: %', p50, p90;
+    RAISE INFO 'Connect to Postgresql server:';
+    RAISE INFO 'psql -U <user> -d <database> -h <host>';
+    RAISE INFO 'Within psql, load the functions:';
+    RAISE INFO '\i <path>/metrics.sql';
+    RAISE INFO 'And run the following plpgsql functions:';
+    RAISE INFO 'Example:';
+    RAISE INFO 'SELECT pr_first_review_percentile_time_by_label(50, ''bug'');';
+    RAISE INFO '***********************************************************************';
+    RAISE INFO 'average_merge_time()';
+    RAISE INFO 'average_merge_time_by_label(labelName VARCHAR(30))';
+    RAISE INFO 'pr_merge_percentile_time(p int)';
+    RAISE INFO 'pr_merge_percentile_time_by_label(p int, labelName varchar(30))';
+    RAISE INFO 'average_first_review_time()';
+    RAISE INFO 'average_first_review_time_by_label(labelName varchar(30))';
+    RAISE INFO 'pr_first_review_percentile_time(p int)';
+    RAISE INFO 'pr_first_review_percentile_time_by_label(p int, labelName varchar(30))';
+    RAISE INFO 'average_approval_time()';
+    RAISE INFO 'average_approval_time_by_label(labelName varchar(30))';
+    RAISE INFO 'average_approval_percentile_time(p int)';
+    RAISE INFO 'average_approval_percentile_time_by_label(p int, labelName varchar(30))';
+    RAISE INFO 'average_response_time()';
+    RAISE INFO 'average_response_percentile_time(p int)';
+    RAISE INFO 'average_response_time_by_label(labelName VARCHAR(30))';
+    RAISE INFO 'average_response_percentile_time_by_label(p int, labelName VARCHAR(30))';
+    RAISE INFO '************************************************************************';
 END;
 $$
