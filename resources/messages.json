@@ -5,5 +5,7 @@
     "limit-subject-line": "- limit the subject line to 50 characters.\n",
     "capitalize-subject-line": "- capitalize the subject line.\n",
     "subject-no-period": "- do not end the subject line with a period.\n",
-    "wrap-commit-message": "- wrap the body at 72 characters"
+    "wrap-commit-message": "- wrap the body at 72 characters",
+
+    "stale-reviewer-messaged": "@%s Friendly ping. Please review this PR. Thank you!"
 }

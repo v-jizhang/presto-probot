@@ -10,7 +10,7 @@ const insertIntoPrReviews = `INSERT INTO "pr_reviews"
     submitted_at=EXCLUDED.submitted_at,
     author=EXCLUDED.author,
     state=EXCLUDED.state`;
-const selectLastReview = `SELECT * FROM pr_reviews where pull_request_id = $1
+const selectLastReview = `SELECT * FROM pr_reviews WHERE pull_request_id = $1
         ORDER BY submitted_at DESC LIMIT 1`;
 
 async function pullRequestReviewSubmitted(context, app) {

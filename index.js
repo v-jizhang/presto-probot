@@ -1,9 +1,12 @@
+const config = require('config')
 const { rerunFailedTests, assignReviewersToPullRequest, welcomeNewContributors, validateCommits, tagPullRequest } = require('./pull_request/pull_requests')
 const { pullRequestReceived } = require('./statistics/pull_request_event_received')
 const { creatTablesIfNotExist } = require('./database/create_tables')
 const { pullRequestReviewSubmitted } = require('./statistics/pull_request_reviews')
 const { pullrequestLabeled, pullrequestUnlabeled } = require('./statistics/pull_request_labels')
 const { pullRequestReviewRequested } = require('./statistics/pull_request_reviewer_requests')
+const { setContext } = require('./util/utils')
+const { pingPullRequests } = require('./pull_request/ping_reviwers')
 
 /**
  * This is the main entrypoint to your Probot app
@@ -34,6 +37,7 @@ module.exports = (app) => {
   */
 
   app.on("pull_request.opened", async(context) => {
+    await setContext(context);
     await welcomeNewContributors(context);
     await validateCommits(context);
     await assignReviewersToPullRequest(context);
@@ -48,28 +52,38 @@ module.exports = (app) => {
       //"discussion_comment.created",]
     "issue_comment.created",
     async(context) => {
+      await setContext(context);
       await rerunFailedTests(app, context);
   });
 
   app.on("pull_request.closed", async(context) => {
+    await setContext(context);
     pullRequestReceived(context, app);
   });
 
   app.on("pull_request_review.submitted", async(context) => {
+    await setContext(context);
     pullRequestReviewSubmitted(context, app);
   });
 
   app.on("pull_request.labeled", async(context) => {
+    await setContext(context);
     pullrequestLabeled(context, app);
   });
 
   app.on("pull_request.unlabeled", async(context) => {
+    await setContext(context);
     pullrequestUnlabeled(context, app);
   });
 
   app.on("pull_request.review_requested", async(context) => {
+    await setContext(context);
     pullRequestReviewRequested(context, app);
   });
+
+  setInterval(() => {
+    pingPullRequests();
+  }, config.get('ping-stale-interval'));
 
   app.log.info("Presto-bot is up and running!");
 };

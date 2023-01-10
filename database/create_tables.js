@@ -18,6 +18,7 @@ async function creatTablesIfNotExist()
         submitted_at TIMESTAMPTZ NOT NULL,
         author VARCHAR(50) NOT NULL,
         state VARCHAR(20),             -- “APPROVED”, “CHANGES_REQUESTED”, “COMMENTED”, “DISMISSED”
+        pinged_author_at TIMESTAMP,    -- when “CHANGES_REQUESTED” is stale, ping the author
         CONSTRAINT fk_review_pull_request FOREIGN KEY(pull_request_id)
             REFERENCES pull_requests(id)
     );`;
@@ -30,12 +31,14 @@ async function creatTablesIfNotExist()
             REFERENCES pull_requests(id)
     );`;
     let createRequestReviewers = `CREATE TABLE IF NOT EXISTS pr_review_requests(
+        id SERIAL PRIMARY KEY NOT NULL,
         pull_request_id INT NOT NULL,  -- foreign key to pr_reviews
-        review_id BIGINT,              -- id of pre_views table, can be null
+        review_id BIGINT,              -- id of pre_views table
         updated_at TIMESTAMP NOT NULL, -- pull request updated time
         requested_reviewer varchar(20),
         request_sender varchar(20),
-        UNIQUE (pull_request_id, review_id),
+        pinged_reviewer_at TIMESTAMP,  -- when request is stale, ping the reviwer
+        -- UNIQUE (pull_request_id, review_id),
         CONSTRAINT fk_review_requests_pull_request FOREIGN KEY(pull_request_id)
 	        REFERENCES pull_requests(id)
     )`;

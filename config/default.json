@@ -8,6 +8,12 @@
     "_comment2": "The number of months of a file history we check to get a list of authors.",
     "file-history-months": 12,
 
-    "_comment2": "The maximun number of changed files a commit should have.",
-    "max-number-of-files-per-commit": 50
+    "_comment3": "The maximun number of changed files a commit should have.",
+    "max-number-of-files-per-commit": 50,
+
+    "_comment4": "Stale review and review request configurations",
+    "ping-stale-response-days": 0,
+    "ping-stale-max-number-prs": 30,
+    "_1_hour": "Check stale reviews and requests",
+    "ping-stale-interval": 3600000
 }

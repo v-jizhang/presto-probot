@@ -267,7 +267,7 @@ BEGIN
     JOIN pr_labels lb ON pr.id = lb.pull_request_id
     WHERE lb.label = labelName;
 
-    RAISE INFO 'DEBUG: avergeApprovalTimeIntervals: %s', avergeApprovalTimeIntervals;
+    --RAISE INFO 'DEBUG: avergeApprovalTimeIntervals: %s', avergeApprovalTimeIntervals;
 
     SELECT array_length(avergeApprovalTimeIntervals, 1) INTO numOfPrApprovals;
     i := 1 + numOfPrApprovals * p / 100;  -- 1 based
