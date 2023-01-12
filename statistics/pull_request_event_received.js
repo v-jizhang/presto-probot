@@ -1,10 +1,11 @@
 const { getDatabaseClient } = require('../database/postgresql')
 const insertIntoPullRequest = `INSERT INTO "pull_requests" 
-  ("id", "title", "created_at", "closed_at", "merged_at", "status")
-  VALUES($1, $2, $3, $4, $5, $6)
+  ("id", "title", "author", "created_at", "closed_at", "merged_at", "status")
+  VALUES($1, $2, $3, $4, $5, $6, $7)
   ON CONFLICT (id) DO UPDATE SET
     id=EXCLUDED.id,
     title=EXCLUDED.title,
+    author=EXCLUDED.author,
     created_at=EXCLUDED.created_at,
     closed_at=EXCLUDED.closed_at,
     merged_at=EXCLUDED.merged_at,
@@ -16,6 +17,7 @@ async function pullRequestReceived(context, app) {
   const client = await getDatabaseClient();
   const pullRequestNumber = context.payload.pull_request.number;
   const title = context.payload.pull_request.title;
+  const author = context.payload.pull_request.user.login;
   const createdAt = context.payload.pull_request.created_at;
   const closedAt = context.payload.pull_request.closed_at;
   const mergedAt = context.payload.pull_request.merged_at;
@@ -25,7 +27,7 @@ async function pullRequestReceived(context, app) {
   }
   
   client.query(insertIntoPullRequest,
-    [pullRequestNumber, title, createdAt, closedAt, mergedAt, status], async (err, res) => {
+    [pullRequestNumber, title, author, createdAt, closedAt, mergedAt, status], async (err, res) => {
     if (err) {
       app.log.error(`Insert into pull_requests failed:
           ${err.message}. 

@@ -1,12 +1,12 @@
 const config = require('config')
 const util = require('node:util')
-const { getDatabaseClient, rollback } = require('../database/postgresql')
+const { getDatabaseClient } = require('../database/postgresql')
 const { selectLastReview } = require('../statistics/pull_request_reviews')
 const { getRepo, getOctokit } = require('../util/utils');
 const messages = require('../resources/messages.json');
 
 // Select the last review request for all the pull requests that is not closed.
-const selectLastReviewRequest = `SELECT * FROM
+const selectLastReviewRequests = `SELECT * FROM
     (SELECT req.*,
         row_number() OVER (PARTITION BY pull_request_id order by updated_at DESC) AS row_number
     FROM pr_review_requests req
@@ -17,11 +17,11 @@ const updateReviewRequest = `UPDATE pr_review_requests
     SET pinged_reviewer_at = $1
     WHERE id = $2;`;
 
-async function pingPullRequests()
+async function pingPullRequestReviewers()
 {
     const repo = getRepo();
     if (!repo) {
-        return 0;
+        return;
     }
     const octokit = getOctokit();
 
@@ -30,10 +30,10 @@ async function pingPullRequests()
     const client = await getDatabaseClient();
     let count = 0;
 
-    const res = await client.query(selectLastReviewRequest);
+    const res = await client.query(selectLastReviewRequests);
     if (res.rowCount == 0) {
         client.end();
-        return 0;
+        return;
     }
     const reviewRequests = res.rows;
     for (const request of reviewRequests) {
@@ -47,22 +47,21 @@ async function pingPullRequests()
             let pingDateBefore = new Date();
             pingDateBefore.setDate(pingDateBefore.getDate() - pingStaleAfterDays);
             if (request.updated_at <= pingDateBefore) {
-                pingReviwers(repo, octokit, request.pull_request_id, request.requested_reviewer);
+                await pingWithName(repo, octokit, request.pull_request_id, request.requested_reviewer, messages['stale-reviewer-message']);
                 await client.query(updateReviewRequest, [new Date(), request.id]);
                 if(++count > maxNumberOfPrsToBePinged) {
                     await client.end();
-                    return count;
+                    return;
                 }
             }
         }
     }
     await client.end();
-    return count;
 }
 
-async function pingReviwers(repo, octokit, prId, reviewer)
+async function pingWithName(repo, octokit, prId, name, messagePattern)
 {
-    const message = util.format(messages['stale-reviewer-messaged'], reviewer);
+    const message = util.format(messagePattern, name);
     await octokit.issues.createComment({
         owner: repo.owner,
         repo: repo.repo,
@@ -71,4 +70,4 @@ async function pingReviwers(repo, octokit, prId, reviewer)
     });
 }
 
-module.exports = {pingPullRequests}
+module.exports = { pingPullRequestReviewers, pingWithName }

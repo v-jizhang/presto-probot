@@ -7,5 +7,6 @@
     "subject-no-period": "- do not end the subject line with a period.\n",
     "wrap-commit-message": "- wrap the body at 72 characters",
 
-    "stale-reviewer-messaged": "@%s Friendly ping. Please review this PR. Thank you!"
+    "stale-reviewer-message": "@%s Friendly ping. Please review this PR. Thank you!",
+    "stale-author-message": "@%s Friendly ping. You have a change request."
 }
