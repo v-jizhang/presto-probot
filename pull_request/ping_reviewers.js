@@ -4,6 +4,7 @@ const { getDatabaseClient } = require('../database/postgresql')
 const { selectLastReview } = require('../statistics/pull_request_reviews')
 const { getRepo, getOctokit } = require('../util/utils');
 const messages = require('../resources/messages.json');
+const { lastPingOneDayAgo } = require('../database/dbUtils')
 
 // Select the last review request for all the pull requests that is not closed.
 const selectLastReviewRequests = `SELECT * FROM
@@ -17,8 +18,13 @@ const updateReviewRequest = `UPDATE pr_review_requests
     SET pinged_reviewer_at = $1
     WHERE id = $2;`;
 
-async function pingPullRequestReviewers()
+async function pingPullRequestReviewers(app)
 {
+    const oneDayPassedFromLastRun = await lastPingOneDayAgo(app);
+    if (!oneDayPassedFromLastRun) {
+        return;
+    }
+
     const repo = getRepo();
     if (!repo) {
         return;

@@ -41,14 +41,23 @@ async function creatTablesIfNotExist()
         -- UNIQUE (pull_request_id, review_id),
         CONSTRAINT fk_review_requests_pull_request FOREIGN KEY(pull_request_id)
 	        REFERENCES pull_requests(id)
-    )`;
+    );`;
     let createRequestReviewersIndex = `CREATE INDEX IF NOT EXISTS idx_requests_pr_id ON pr_review_requests(pull_request_id);`;
+    let createLogs = `CREATE TABLE IF NOT EXISTS logs(
+        id SERIAL PRIMARY KEY NOT NULL,
+        event VARCHAR(20) NOT NULL,
+        event_time TIMESTAMP NOT NULL,
+        message VARCHAR(100)
+    );`;
+    let createLogsIndex = `CREATE INDEX IF NOT EXISTS idx_logs_event ON logs(event);`;
 
     await client.query(createPullRequestTableQuery);
     await client.query(createPullRequestReviewTableQuery);
     await client.query(createPullRequestLabelTableQuery);
     await client.query(createRequestReviewers);
     await client.query(createRequestReviewersIndex);
+    await client.query(createLogs);
+    await client.query(createLogsIndex);
     await client.end();
 }
 

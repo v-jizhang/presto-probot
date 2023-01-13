@@ -4,6 +4,7 @@ const { getDatabaseClient } = require('../database/postgresql')
 const { getRepo, getOctokit } = require('../util/utils');
 const { pingWithName } = require('./ping_reviewers')
 const messages = require('../resources/messages.json');
+const { lastPingOneDayAgo } = require('../database/dbUtils')
 
 const selectLastPrReviews = `SELECT * FROM
     (
@@ -24,8 +25,13 @@ const updateReview = `UPDATE pr_reviews
     SET pinged_author_at = $1
     WHERE id = $2;`;
 
-async function pingPullRequestAuthor()
+async function pingPullRequestAuthor(app)
 {
+    const oneDayPassedFromLastRun = await lastPingOneDayAgo(app);
+    if (!oneDayPassedFromLastRun) {
+        return;
+    }
+
     const repo = getRepo();
     if (!repo) {
         return 0;

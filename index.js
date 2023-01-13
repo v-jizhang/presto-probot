@@ -83,8 +83,8 @@ module.exports = (app) => {
   });
 
   setInterval(() => {
-    pingPullRequestReviewers();
-    pingPullRequestAuthor();
+    pingPullRequestReviewers(app);
+    pingPullRequestAuthor(app);
   }, config.get('ping-stale-interval'));
 
   app.log.info("Presto-bot is up and running!");
