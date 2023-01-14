@@ -3,6 +3,9 @@ const { getDatabaseClient} = require('../database/postgresql')
 const selectLastPingLog = `SELECT * FROM logs
     WHERE event = 'ping'
     ORDER BY event_time DESC LIMIT 1;`;
+const insertIntoLogs = `INSERT INTO logs ("event", "event_time")
+    VALUES($1, $2);`;
+
 async function lastPingOneDayAgo(app)
 {
     const client = await getDatabaseClient();
@@ -21,10 +24,22 @@ async function lastPingOneDayAgo(app)
         app.log.error(err);
         return false;
     }
+    finally {
+        client.end();
+    }
 
     return false;
 }
 
+async function pinUpdateLogs(app)
+{
+    const client = await getDatabaseClient();
+    client.query(insertIntoLogs, ['ping', new Date()], (err, res) => {
+        if (err) {
+            app.log.error();
+        }
+        client.end();
+    });
+}
 
-
-module.exports = { lastPingOneDayAgo }
+module.exports = { lastPingOneDayAgo, pinUpdateLogs }

@@ -4,7 +4,7 @@ const { getDatabaseClient } = require('../database/postgresql')
 const { getRepo, getOctokit } = require('../util/utils');
 const { pingWithName } = require('./ping_reviewers')
 const messages = require('../resources/messages.json');
-const { lastPingOneDayAgo } = require('../database/dbUtils')
+const { lastPingOneDayAgo, pinUpdateLogs } = require('../database/dbUtils')
 
 const selectLastPrReviews = `SELECT * FROM
     (
@@ -73,6 +73,8 @@ async function pingPullRequestAuthor(app)
         }
     }
     await client.end();
+
+    pinUpdateLogs(app);
 }
 
 module.exports = { pingPullRequestAuthor }
