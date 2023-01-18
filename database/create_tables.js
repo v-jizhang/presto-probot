@@ -18,7 +18,7 @@ async function creatTablesIfNotExist()
         submitted_at TIMESTAMPTZ NOT NULL,
         author VARCHAR(50) NOT NULL,
         state VARCHAR(20),             -- “APPROVED”, “CHANGES_REQUESTED”, “COMMENTED”, “DISMISSED”
-        pinged_author_at TIMESTAMP,    -- when “CHANGES_REQUESTED” is stale, ping the author
+        pinged_author_at TIMESTAMPTZ,    -- when “CHANGES_REQUESTED” is stale, ping the author
         CONSTRAINT fk_review_pull_request FOREIGN KEY(pull_request_id)
             REFERENCES pull_requests(id)
     );`;
@@ -34,10 +34,10 @@ async function creatTablesIfNotExist()
         id SERIAL PRIMARY KEY NOT NULL,
         pull_request_id INT NOT NULL,  -- foreign key to pr_reviews
         review_id BIGINT,              -- id of pre_views table
-        updated_at TIMESTAMP NOT NULL, -- pull request updated time
+        updated_at TIMESTAMPTZ NOT NULL, -- pull request updated time
         requested_reviewer varchar(20),
         request_sender varchar(20),
-        pinged_reviewer_at TIMESTAMP,  -- when request is stale, ping the reviwer
+        pinged_reviewer_at TIMESTAMPTZ,  -- when request is stale, ping the reviwer
         -- UNIQUE (pull_request_id, review_id),
         CONSTRAINT fk_review_requests_pull_request FOREIGN KEY(pull_request_id)
 	        REFERENCES pull_requests(id)
@@ -46,7 +46,7 @@ async function creatTablesIfNotExist()
     let createLogs = `CREATE TABLE IF NOT EXISTS logs(
         id SERIAL PRIMARY KEY NOT NULL,
         event VARCHAR(20) NOT NULL,
-        event_time TIMESTAMP NOT NULL,
+        event_time TIMESTAMPTZ NOT NULL,
         message VARCHAR(100)
     );`;
     let createLogsIndex = `CREATE INDEX IF NOT EXISTS idx_logs_event ON logs(event);`;

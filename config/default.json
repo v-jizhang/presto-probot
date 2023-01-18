@@ -8,7 +8,7 @@
     "_comment2": "The number of months of a file history we check to get a list of authors.",
     "file-history-months": 12,
 
-    "_comment3": "The maximun number of changed files a commit should have.",
+    "_comment3": "The maximum number of changed files a commit should have.",
     "max-number-of-files-per-commit": 50,
 
     "_comment4": "Stale review and review request configurations",
