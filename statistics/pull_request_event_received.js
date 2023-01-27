@@ -21,7 +21,7 @@ async function pullRequestReceived(context, app) {
   const createdAt = context.payload.pull_request.created_at;
   const closedAt = context.payload.pull_request.closed_at;
   const mergedAt = context.payload.pull_request.merged_at;
-  let status = context.payload.pull_request.state;
+  let status = context.payload.pull_request.state.toLowerCase();
   if (context.payload.pull_request.merged) {
     status = "merged";
   }

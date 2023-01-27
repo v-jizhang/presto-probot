@@ -1,6 +1,6 @@
 {
     "welcome-new-contributors": "Hello %s! Welcome to Presto project!\nThank you and congrats for opening your first pull request. We will get back to you as soon as we can.\nPlease use [Contributing to Presto](https://github.com/prestodb/presto/blob/master/CONTRIBUTING.md) as your guidelines\nThank you!",
-    "commit-number-changed-files-exceeds": "\n- The commit %s has %d changed files, please consider splitting it to mutiple commits.",
+    "commit-number-changed-files-exceeds": "\n- The commit %s has %d changed files, please consider splitting it to multiple commits.",
     "separate-subject-from-body": "- separate subject from body with a blank line.\n",
     "limit-subject-line": "- limit the subject line to 50 characters.\n",
     "capitalize-subject-line": "- capitalize the subject line.\n",

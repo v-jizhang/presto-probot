@@ -67,4 +67,4 @@ async function makeSurePullRequestInsertedFirst(context, app)
     client.end();
 }
 
-module.exports = { pullRequestReviewRequested }
+module.exports = { pullRequestReviewRequested, insertIntoReviewRequests }

@@ -23,7 +23,7 @@ async function creatTablesIfNotExist()
             REFERENCES pull_requests(id)
     );`;
     let createPullRequestLabelTableQuery = `CREATE TABLE IF NOT EXISTS pr_labels(
-        id BIGINT PRIMARY KEY NOT NULL,   -- This is the label id
+        id SERIAL PRIMARY KEY NOT NULL,   -- This is the label id
         pull_request_id INT NOT NULL,  -- foreign key to pull_request
         label VARCHAR(30),
         UNIQUE (pull_request_id, label),

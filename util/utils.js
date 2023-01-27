@@ -1,3 +1,6 @@
+const config = require('config')
+const { Octokit } = require("@octokit/rest");
+
 let repo;
 let octokit;
 
@@ -9,19 +12,30 @@ function isKickOffTestComment(comment)
 
 async function setContext(context)
 {
-    if (!repo) {
-        repo = await context.repo();
-        octokit = context.octokit;
-    }
+    repo = await context.repo();
+    octokit = context.octokit;
 }
 
 function getRepo() {
-    return repo;
+    if (repo) {
+        return repo;
+    }
+    return config.get('repo');
 }
 
 function getOctokit()
 {
-    return octokit;
+    if (octokit) {
+        return octokit;
+    }
+    if (process.env.GITHUB_TOKEN) {
+        octokit = new Octokit({
+            auth: process.env.GITHUB_TOKEN,
+            userAgent: 'prestoProbot v1.2.3'
+        });
+
+        return octokit;
+    }
 }
 
 module.exports = { isKickOffTestComment, setContext, getRepo, getOctokit };

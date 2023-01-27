@@ -19,13 +19,16 @@ async function pullRequestReviewSubmitted(context, app) {
     const pullRequestNumber = context.payload.pull_request.number;
     const submittedAt = context.payload.review.submitted_at;
     const reviewAuthor = context.payload.review.user.login;
-    const state = context.payload.review.state;
+    const state = await context.payload.review.state.toLowerCase();
 
     const pullRequestTitle = context.payload.pull_request.title;
     const pullRequestCreatedAt = context.payload.pull_request.created_at;
     const pullRequestClosedAt = context.payload.pull_request.closed_at;
     const pullRequestMergedAt = context.payload.pull_request.merged_at;
-    const pullReqestStatus = context.payload.pull_request.state;
+    const pullReqestStatus = await context.payload.pull_request.state.toLowerCase();
+    if (context.payload.pull_request.merged) {
+        pullReqestStatus = "merged";
+    }
 
     client.query('BEGIN', (err, res) => {
         if (err) {
@@ -64,4 +67,4 @@ async function pullRequestReviewSubmitted(context, app) {
     });
 }
 
-module.exports = {pullRequestReviewSubmitted, selectLastReview}
+module.exports = {pullRequestReviewSubmitted, selectLastReview, insertIntoPrReviews}

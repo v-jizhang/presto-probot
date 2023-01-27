@@ -2,10 +2,9 @@ const { getDatabaseClient, rollback} = require('../database/postgresql')
 const { insertIntoPullRequest, selectPullRequestBynumber } = require('./pull_request_event_received')
 
 const insertIntoPrLabels = `INSERT INTO "pr_labels"
-        ("id", "pull_request_id", "label")
-        VALUES($1, $2, $3)
-        ON CONFLICT (id) DO UPDATE SET
-        id=EXCLUDED.id,
+        ("pull_request_id", "label")
+        VALUES($1, $2)
+        ON CONFLICT (pull_request_id, label) DO UPDATE SET
         pull_request_id=EXCLUDED.pull_request_id,
         label=EXCLUDED.label;`;
 const deleteFromPrLabels = `DELETE FROM "pr_labels"
@@ -13,7 +12,6 @@ const deleteFromPrLabels = `DELETE FROM "pr_labels"
 
 async function pullrequestLabeled(context, app) {
     const client = await getDatabaseClient();
-    const id = context.payload.label.id;
     const pullRequestId = context.payload.pull_request.number;
     const label = context.payload.label.name;
 
@@ -21,7 +19,10 @@ async function pullrequestLabeled(context, app) {
     const pullRequestCreatedAt = context.payload.pull_request.created_at;
     const pullRequestClosedAt = context.payload.pull_request.closed_at;
     const pullRequestMergedAt = context.payload.pull_request.merged_at;
-    const pullReqestStatus = context.payload.pull_request.state;
+    const pullReqestStatus = context.payload.pull_request.state.toLowerCase();
+    if (context.payload.pull_request.merged) {
+        pullReqestStatus = "merged";
+    }
     
     client.query('BEGIN', (err, res) => {
         if (err) {
@@ -44,7 +45,7 @@ async function pullrequestLabeled(context, app) {
                     );
                 }
                 client.query(insertIntoPrLabels,
-                    [id, pullRequestId, label],
+                    [pullRequestId, label],
                     (err, res) => {
                         if (err) {
                             app.log.error(`Insert into pr_labels failed:
@@ -75,4 +76,4 @@ async function pullrequestUnlabeled(context, app) {
     );
 }
 
-module.exports = { pullrequestLabeled, pullrequestUnlabeled }
+module.exports = { pullrequestLabeled, pullrequestUnlabeled, insertIntoPrLabels }

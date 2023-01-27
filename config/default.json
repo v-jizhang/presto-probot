@@ -12,8 +12,14 @@
     "max-number-of-files-per-commit": 50,
 
     "_comment4": "Stale review and review request configurations",
-    "ping-stale-response-days": 0,
+    "ping-stale-response-days": 7,
     "ping-stale-max-number-prs": 15,
     "_1_hour": "Check stale reviews and requests",
-    "ping-stale-interval": 300000
+    "ping-stale-interval": 300000,
+
+    "_comment5": "Change to prestodb / presto in production",
+    "repo": {
+        "owner": "v-jizhang",
+        "repo": "presto-test"
+    }
 }
