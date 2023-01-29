@@ -188,6 +188,7 @@ is receiving webhook data, you can tail your app's logs:
 
     $ heroku config:set LOG_LEVEL=trace
     $ heroku logs --tail
+If you get "Everything up-to-date" when running `git push heroku main`, try `git pull` then deploy again.
 
 * Stop prestobot
     $ heroku ps:scale web=0
@@ -195,6 +196,9 @@ is receiving webhook data, you can tail your app's logs:
 * Start prestobot
 If using a paid account, standard X1, 2 is the number of dynos. You can get it by `heroku ps`.
     $ heroku ps:scale web=2
+
+* Restart
+    $ heroku restart
 
 ## Database Access Using psql
 

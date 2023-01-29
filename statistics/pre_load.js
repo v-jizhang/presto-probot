@@ -27,8 +27,8 @@ async function preLoadPullRequestData(app)
             prStartNumber = -1;
             break;
         }
-        // Sleep 2 seconds to avoid rate limit
-        await new Promise(r => setTimeout(r, 2000));
+        // Sleep 3 seconds to avoid rate limit
+        await new Promise(r => setTimeout(r, 3000));
     }
 
     

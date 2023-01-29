@@ -22,7 +22,7 @@ async function getLastWorkflowRunByPullRequest(context, repo, workflow, pullRequ
         workflowRun = workflowRuns.data.workflow_runs[i];
 
         if (workflowRun.event == 'schedule') {
-          // A run is triggered by 'schedule' means the worflow is a cron workflow, skip it
+          // A run is triggered by 'schedule' means the workflow is a cron workflow, skip it
           return;
         }
 
