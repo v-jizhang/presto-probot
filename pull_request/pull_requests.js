@@ -14,6 +14,7 @@ function isPullRequest(issue)
 async function rerunFailedTests(app, context)
 {
     if (isPullRequest(context.payload.issue) && isKickOffTestComment(context.payload.comment.body)) {
+        app.log.info("Kick off tests received.");
         const repo = await context.repo();
         //app.log.info(repo);
   
@@ -44,21 +45,26 @@ async function rerunFailedTests(app, context)
   
             if (typeof(lastWorkflowRun) != 'undefined' && lastWorkflowRun.status === "completed" &&
                     lastWorkflowRun.conclusion != "success") {
-                let retry = 5;
-                let response;
-                do {
-                    response = await context.octokit.actions.reRunWorkflowFailedJobs({
-                        owner: repo.owner,
-                        repo: repo.repo,
-                        run_id: lastWorkflowRun.id,
-                    });
-                    retry--;
-                } while (retry > 0 && response.status == 403);
-                if (response.status == 403) {
-                    app.log.warn('Re-run workflow ' + workflow.name + ' failed, Please make sure the bot has workflow write permission.');
+                try {
+                    let retry = 5;
+                    let response;
+                    do {
+                        response = await context.octokit.actions.reRunWorkflowFailedJobs({
+                            owner: repo.owner,
+                            repo: repo.repo,
+                            run_id: lastWorkflowRun.id,
+                        });
+                        retry--;
+                    } while (retry > 0 && response.status == 403);
+                    if (response.status == 403) {
+                        app.log.warn('Re-run workflow ' + workflow.name + ' failed, Please make sure the bot has workflow write permission.');
+                    }
+                    else {
+                        app.log.info('Started failed jobs of workflow run ' + workflow.name + '.');
+                    }
                 }
-                else {
-                    app.log.info('Started failed jobs of workflow run ' + workflow.name + '.');
+                catch (err) {
+                    app.log.info(err);
                 }
             }
         }

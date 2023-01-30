@@ -10,7 +10,7 @@ async function getLastWorkflowRunByPullRequest(context, repo, workflow, pullRequ
         owner: repo.owner,
         repo: repo.repo,
         workflow_id: workflow.id,
-        per_page: 20,
+        per_page: 100,
         page: pageNumber++,
       });
 
