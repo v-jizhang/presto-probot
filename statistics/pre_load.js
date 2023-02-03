@@ -9,20 +9,27 @@ const { insertIntoReviewRequests } = require('./pull_request_reviewer_requests')
 const selectLastPreload = `SELECT * FROM logs
     WHERE event = 'preload'
     ORDER BY event_time DESC LIMIT 1;`;
+const selectPreloadEnd = `SELECT * FROM logs
+    WHERE event = 'preload_end';`;
 const updatePreloadLog = `INSERT INTO logs
     ("event", "event_time", "message")
     VALUES('preload', $1, $2);`;
 
 async function preLoadPullRequestData(app)
 {
-    let prStartNumber = await getStartPrNumber(app);
-    if (!prStartNumber || isNaN(prStartNumber) || prStartNumber < 1) {
+    const startAndEnd = await getStartPrNumber(app);
+    let prStartNumber = startAndEnd.start;
+    const prEndNumber = startAndEnd.end;
+    if (!prStartNumber || isNaN(prStartNumber) || prStartNumber < 1 || prStartNumber >= prEndNumber) {
         return;
     }
 
     // preload 30 PRs per hour
     const client = await getDatabaseClient();
     for (let i = 0; i < 30; i++) {
+        if (prStartNumber >= prEndNumber) {
+            break;
+        }
         if (!await loadPullRequestByPrNumber(app, client, prStartNumber++)) {
             prStartNumber = -1;
             break;
@@ -46,12 +53,24 @@ async function getStartPrNumber(app)
 {
     const client = await getDatabaseClient();
     try {
-        const res = await client.query(selectLastPreload);
-        if (res.rowCount === 0) {
-            return 1;
+        const resStart = await client.query(selectLastPreload);
+        if (resStart.rowCount === 0) {
+            return {
+                start: 1,
+                end: -1
+            };
         }
-        const startNumber = parseInt(res.rows[0].message);
-        return startNumber;
+        const startNumber = parseInt(resStart.rows[0].message);
+        let endNumber = -1;
+        const resEnd = await client.query(selectPreloadEnd);
+        if (resEnd.rowCount > 0) {
+            endNumber = parseInt(resEnd.rows[0].message);
+        }
+
+        return {
+            start: startNumber,
+            end: endNumber
+        };
     } catch (err) {
         app.log.error(err);
         return -1;

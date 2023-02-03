@@ -3,6 +3,7 @@ const cheerio = require('cheerio');
 
 const selfReviewRequestPattern = ' self-requested a review'
 const reviewerRequestedPattern = ' requested a review from '
+const assigned = ' assigned '
 
 const getPage = (url, cb ) => {
     request(url, {
@@ -45,6 +46,20 @@ const parsePage = ( data ) => {
                     requested_reviewer: requestedReviewer,
                     updated_time: updatedTime.attr().datetime
                 });
+            }
+            else {
+                indexRequested = datum.indexOf(assigned);
+                if (indexRequested >= 0) {
+                    updatedTime = $(elem).find('relative-time');
+                    requestSender = datum.substring(0, indexRequested).trim();
+                    requestedReviewer = datum.substring(indexRequested + assigned.length);
+                    requestedReviewer = requestedReviewer.substring(0, requestedReviewer.indexOf(' ')).trim();
+                    output.push({
+                        requested_sender: requestSender,
+                        requested_reviewer: requestedReviewer,
+                        updated_time: updatedTime.attr().datetime
+                    });
+                }
             }
         }
     });
