@@ -20,14 +20,14 @@ async function preLoadPullRequestData(app)
     const startAndEnd = await getStartPrNumber(app);
     let prStartNumber = startAndEnd.start;
     const prEndNumber = startAndEnd.end;
-    if (!prStartNumber || isNaN(prStartNumber) || prStartNumber < 1 || prStartNumber >= prEndNumber) {
+    if (!prStartNumber || isNaN(prStartNumber) || prStartNumber < 1 || (prStartNumber >= prEndNumber && prEndNumber > 0)) {
         return;
     }
 
     // preload 30 PRs per hour
     const client = await getDatabaseClient();
     for (let i = 0; i < 30; i++) {
-        if (prStartNumber >= prEndNumber) {
+        if (prStartNumber >= prEndNumber && prEndNumber != -1) {
             break;
         }
         if (!await loadPullRequestByPrNumber(app, client, prStartNumber++)) {
