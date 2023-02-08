@@ -38,7 +38,7 @@ async function creatTablesIfNotExist()
         requested_reviewer varchar(20),
         request_sender varchar(20),
         pinged_reviewer_at TIMESTAMPTZ,  -- when request is stale, ping the reviwer
-        -- UNIQUE (pull_request_id, review_id),
+        CONSTRAINT pr_review_requests_unique UNIQUE (pull_request_id, updated_at, requested_reviewer, request_sender),
         CONSTRAINT fk_review_requests_pull_request FOREIGN KEY(pull_request_id)
 	        REFERENCES pull_requests(id)
     );`;

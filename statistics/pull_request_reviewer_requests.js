@@ -4,7 +4,9 @@ const { selectLastReview } = require('./pull_request_reviews')
 
 const insertIntoReviewRequests = `INSERT INTO "pr_review_requests"
     ("pull_request_id", "review_id", "updated_at", "requested_reviewer", "request_sender")
-    VALUES($1, $2, $3, $4, $5);`;
+    VALUES($1, $2, $3, $4, $5)
+    ON CONFLICT ON CONSTRAINT pr_review_requests_unique
+    DO NOTHING;`;
 const selectPullRequest = `SELECT * from pull_requests
     WHERE id = $1;`;
 
