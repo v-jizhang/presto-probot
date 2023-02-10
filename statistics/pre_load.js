@@ -24,17 +24,17 @@ async function preLoadPullRequestData(app)
         return;
     }
 
-    // preload 30 PRs per hour
+    // preload 50 PRs per hour
     const client = await getDatabaseClient();
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 50; i++) {
         if (prStartNumber >= prEndNumber && prEndNumber != -1) {
             break;
         }
         if (!await loadPullRequestByPrNumber(app, client, prStartNumber++)) {
-            prStartNumber = -1;
-            break;
+            // Loading failed, retry the last one
+            prStartNumber = prStartNumber - 1;
         }
-        // Sleep 3 seconds to avoid rate limit
+        // Sleep 3 seconds to avoid hitting rate limit
         await new Promise(r => setTimeout(r, 3000));
     }
 
