@@ -14,6 +14,8 @@ const selectPreloadEnd = `SELECT * FROM logs
 const updatePreloadLog = `INSERT INTO logs
     ("event", "event_time", "message")
     VALUES('preload', $1, $2);`;
+const selectPrNumOfLastLoad = `SELECT * FROM logs
+    WHERE event = 'preload' and message = $1;`;
 
 async function preLoadPullRequestData(app)
 {
@@ -60,7 +62,13 @@ async function getStartPrNumber(app)
                 end: -1
             };
         }
-        const startNumber = parseInt(resStart.rows[0].message);
+
+        const resCount = await client.query(selectPrNumOfLastLoad, [resStart.rows[0].message]);
+        let startNumber = parseInt(resStart.rows[0].message);
+        if(resCount.rowCount > 2) {
+            // Tried at least 3 time, this PR cannot be read, skip it.
+            startNumber++;
+        }
         let endNumber = -1;
         const resEnd = await client.query(selectPreloadEnd);
         if (resEnd.rowCount > 0) {
