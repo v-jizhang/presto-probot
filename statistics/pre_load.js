@@ -16,6 +16,8 @@ const updatePreloadLog = `INSERT INTO logs
     VALUES('preload', $1, $2);`;
 const selectPrNumOfLastLoad = `SELECT * FROM logs
     WHERE event = 'preload' and message = $1;`;
+const selectLastPrLoaded = `SELECT * FROM pull_requests
+    ORDER by id DESC limit 1;`;
 
 async function preLoadPullRequestData(app)
 {
@@ -26,9 +28,9 @@ async function preLoadPullRequestData(app)
         return;
     }
 
-    // preload 50 PRs per hour
+    // preload 30 PRs per hour
     const client = await getDatabaseClient();
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 30; i++) {
         if (prStartNumber >= prEndNumber && prEndNumber != -1) {
             break;
         }
@@ -68,6 +70,11 @@ async function getStartPrNumber(app)
         if(resCount.rowCount > 2) {
             // Tried at least 3 time, this PR cannot be read, skip it.
             startNumber++;
+        }
+
+        const resLastPr = await client.query(selectLastPrLoaded);
+        if (resLastPr.rowCount === 1 && startNumber <= resLastPr.rows[0].id) {
+            startNumber = resLastPr.rows[0].id + 1;
         }
         let endNumber = -1;
         const resEnd = await client.query(selectPreloadEnd);
