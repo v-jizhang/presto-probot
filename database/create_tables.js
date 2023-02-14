@@ -6,7 +6,7 @@ async function creatTablesIfNotExist()
     let createPullRequestTableQuery = `CREATE TABLE IF NOT EXISTS pull_requests(
         id INT PRIMARY KEY NOT NULL,   -- This is the github pull request number
         title VARCHAR(100) NOT NULL,
-        author VARCHAR(20),
+        author VARCHAR(50),
         created_at TIMESTAMPTZ NOT NULL,
         closed_at TIMESTAMPTZ,
         merged_at TIMESTAMPTZ,
@@ -35,8 +35,8 @@ async function creatTablesIfNotExist()
         pull_request_id INT NOT NULL,  -- foreign key to pr_reviews
         review_id BIGINT,              -- id of pre_views table
         updated_at TIMESTAMPTZ NOT NULL, -- pull request updated time
-        requested_reviewer varchar(20),
-        request_sender varchar(20),
+        requested_reviewer varchar(50),
+        request_sender varchar(50),
         pinged_reviewer_at TIMESTAMPTZ,  -- when request is stale, ping the reviwer
         CONSTRAINT pr_review_requests_unique UNIQUE (pull_request_id, updated_at, requested_reviewer, request_sender),
         CONSTRAINT fk_review_requests_pull_request FOREIGN KEY(pull_request_id)

@@ -67,11 +67,17 @@ async function getStartPrNumber(app)
 {
     const client = await getDatabaseClient();
     try {
+        let endNumber = -1;
+        const resEnd = await client.query(selectPreloadEnd);
+        if (resEnd.rowCount > 0) {
+            endNumber = parseInt(resEnd.rows[0].message);
+        }
+
         const resStart = await client.query(selectLastPreload);
         if (resStart.rowCount === 0) {
             return {
                 start: 1,
-                end: -1
+                end: endNumber
             };
         }
 
@@ -85,11 +91,6 @@ async function getStartPrNumber(app)
         const resLastPr = await client.query(selectLastPrLoaded);
         if (resLastPr.rowCount === 1 && startNumber <= resLastPr.rows[0].id) {
             startNumber = resLastPr.rows[0].id + 1;
-        }
-        let endNumber = -1;
-        const resEnd = await client.query(selectPreloadEnd);
-        if (resEnd.rowCount > 0) {
-            endNumber = parseInt(resEnd.rows[0].message);
         }
 
         return {

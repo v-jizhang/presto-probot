@@ -1,9 +1,10 @@
 const request = require('request');
 const cheerio = require('cheerio');
 
-const selfReviewRequestPattern = ' self-requested a review'
+const selfReviewRequestPattern = ' self-requested a review '
 const reviewerRequestedPattern = ' requested a review from '
 const assigned = ' assigned '
+const selfAssigned = ' self-assigned '
 
 const getPage = (url, cb ) => {
     request(url, {
@@ -24,6 +25,9 @@ const parsePage = ( data ) => {
         let requestedReviewer;
         let updatedTime;
         let indexRequested = datum.indexOf(selfReviewRequestPattern);
+        if (indexRequested < 0) {
+            indexRequested = datum.indexOf(selfAssigned);
+        }
         if (indexRequested >= 0) {
             updatedTime = $(elem).find('relative-time');
             requestSender = datum.substring(0, indexRequested).trim();
@@ -53,12 +57,15 @@ const parsePage = ( data ) => {
                     updatedTime = $(elem).find('relative-time');
                     requestSender = datum.substring(0, indexRequested).trim();
                     requestedReviewer = datum.substring(indexRequested + assigned.length);
-                    requestedReviewer = requestedReviewer.substring(0, requestedReviewer.indexOf(' ')).trim();
-                    output.push({
-                        requested_sender: requestSender,
-                        requested_reviewer: requestedReviewer,
-                        updated_time: updatedTime.attr().datetime
-                    });
+
+                    if (!requestSender.includes(" ") && requestSender.length < 50 && requestedReviewer.length < 50) {
+                        requestedReviewer = requestedReviewer.substring(0, requestedReviewer.indexOf(' ')).trim();
+                        output.push({
+                            requested_sender: requestSender,
+                            requested_reviewer: requestedReviewer,
+                            updated_time: updatedTime.attr().datetime
+                        });
+                    }
                 }
             }
         }
