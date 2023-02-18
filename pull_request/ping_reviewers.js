@@ -9,7 +9,7 @@ const { lastPingOneDayAgo } = require('../database/dbUtils')
 // Select the last review request for all the pull requests that is not closed.
 const selectLastReviewRequests = `SELECT * FROM
     (SELECT req.*,
-        row_number() OVER (PARTITION BY pull_request_id order by updated_at DESC) AS row_number
+        row_number() OVER (PARTITION BY pull_request_id order by req.updated_at DESC) AS row_number
     FROM pr_review_requests req
     JOIN pull_requests pr ON pr.id = req.pull_request_id
     WHERE pr.status = 'open'

@@ -9,9 +9,21 @@ const insertIntoPrReviews = `INSERT INTO "pr_reviews"
     pull_request_id=EXCLUDED.pull_request_id,
     submitted_at=EXCLUDED.submitted_at,
     author=EXCLUDED.author,
-    state=EXCLUDED.state`;
+    state=EXCLUDED.state;`;
 const selectLastReview = `SELECT * FROM pr_reviews WHERE pull_request_id = $1
         ORDER BY submitted_at DESC LIMIT 1`;
+const insertIntoReviewComments = `INSERT INTO review_comments
+    ("review_id", "id", "created_at", "updated_at", "sender", "body")
+    VALUES($1, $2, $3, $4, $5, $6)
+    ON CONFLICT (review_id, id) DO UPDATE SET
+    updated_at=EXCLUDED.updated_at,
+    sender=EXCLUDED.sender,
+    body=EXCLUDED.body;`;
+const insertIntoAssignees = `INSERT INTO assignees
+    ("github_number", "login_name", "type")
+    VALUES($1, $2, $3)
+    ON CONFLICT (github_number, login_name, type)
+    DO NOTHING;`;
 
 async function pullRequestReviewSubmitted(context, app) {
     const client = await getDatabaseClient();
@@ -67,4 +79,4 @@ async function pullRequestReviewSubmitted(context, app) {
     });
 }
 
-module.exports = {pullRequestReviewSubmitted, selectLastReview, insertIntoPrReviews}
+module.exports = {pullRequestReviewSubmitted, selectLastReview, insertIntoPrReviews, insertIntoReviewComments, insertIntoAssignees}

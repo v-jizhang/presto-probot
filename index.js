@@ -8,7 +8,7 @@ const { pullRequestReviewRequested } = require('./statistics/pull_request_review
 const { setContext } = require('./util/utils')
 const { pingPullRequestReviewers } = require('./pull_request/ping_reviewers')
 const { pingPullRequestAuthor } = require('./pull_request/ping_authors')
-const { preLoadPullRequestData } = require('./statistics/pre_load')
+const { preLoadPullRequestsAndIssues } = require('./statistics/pre_load')
 
 /**
  * This is the main entrypoint to your Probot app
@@ -19,7 +19,6 @@ module.exports = (app) => {
   // Create tables if not exist
   creatTablesIfNotExist();
 
-  /*
   app.on("issues.opened", async (context) => {
     const issueComment = context.issue({
       body: "Thanks for opening this issue!",
@@ -27,7 +26,7 @@ module.exports = (app) => {
     return context.octokit.issues.createComment(issueComment);
   });
   
-
+  /*
   app.on("push", async(context) => {
     app.log.info(context);
   });
@@ -86,7 +85,7 @@ module.exports = (app) => {
   setInterval(() => {
     pingPullRequestReviewers(app);
     pingPullRequestAuthor(app);
-    preLoadPullRequestData(app);
+    preLoadPullRequestsAndIssues(app);
   }, config.get('ping-stale-interval'));
 
   app.log.info("Presto-bot is up and running!");

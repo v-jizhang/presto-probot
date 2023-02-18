@@ -7,10 +7,14 @@ async function creatTablesIfNotExist()
         id INT PRIMARY KEY NOT NULL,   -- This is the github pull request number
         title VARCHAR(100) NOT NULL,
         author VARCHAR(50),
+        body TEXT,
         created_at TIMESTAMPTZ NOT NULL,
         closed_at TIMESTAMPTZ,
+        updated_at TIMESTAMPTZ,
         merged_at TIMESTAMPTZ,
-        status VARCHAR(10)             -- “open”, “closed”, “merged”
+        is_pull_request BOOLEAN DEFAULT TRUE,
+        status VARCHAR(10),             -- “open”, “closed”, “merged”
+        closed_by VARCHAR(50)
     );`;
     let createPullRequestReviewTableQuery = `CREATE TABLE IF NOT EXISTS pr_reviews(
         id BIGINT PRIMARY KEY NOT NULL,   -- This is the review id
@@ -51,6 +55,47 @@ async function creatTablesIfNotExist()
     );`;
     let createLogsIndex = `CREATE INDEX IF NOT EXISTS idx_logs_event ON logs(event);`;
 
+    let createCommentTableQuery = `CREATE TABLE IF NOT EXISTS comments(
+        github_number INT NOT NULL,     -- PR number or issue number
+        id BIGINT NOT NULL,             -- Comment ID within the issue
+        created_at TIMESTAMPTZ NOT NULL,
+        updated_at TIMESTAMPTZ NOT NULL,
+        sender VARCHAR(50),
+        body TEXT,
+        CONSTRAINT fk_comment_to_issue_id FOREIGN KEY(github_number)
+            REFERENCES pull_requests(id),
+        UNIQUE(github_number, id)
+    );`;
+    let createReviewCommentsTableQuery = `CREATE TABLE IF NOT EXISTS review_comments(
+        review_id BIGINT NOT NULL,
+        id BIGINT NOT NULL,             -- Comment id within the review
+        created_at TIMESTAMPTZ NOT NULL,
+        updated_at TIMESTAMPTZ NOT NULL,
+        sender VARCHAR(50),
+        body TEXT,
+        PRIMARY KEY (review_id, id),
+        CONSTRAINT fk_review_comment_to_review FOREIGN KEY(review_id)
+            REFERENCES pr_reviews(id)
+    );`;
+    let createAssigneesTableQuery = `CREATE TABLE IF NOT EXISTS assignees(
+        id SERIAL PRIMARY KEY NOT NULL,
+        github_number INT NOT NULL,     -- PR number or issue number
+        login_name VARCHAR(50),
+        type VARCHAR(10),               -- "assignee", "reviewer"
+        CONSTRAINT fk_assignee_to_review FOREIGN KEY(github_number)
+            REFERENCES pull_requests(id),
+        UNIQUE(github_number, login_name, type)
+    );`;
+    let createTaskTableQuery = `CREATE TABLE IF NOT EXISTS tasks(
+        id SERIAL PRIMARY KEY NOT NULL,
+        task VARCHAR(10),            -- "preload"
+        param JSON,                     -- { start_num: 15, end_num: 20, overwrite: false }
+        status VARCHAR(10),             -- "open", "active", "closed", "complete", "invalid"
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ,
+        description TEXT
+    );`;
+
     await client.query(createPullRequestTableQuery);
     await client.query(createPullRequestReviewTableQuery);
     await client.query(createPullRequestLabelTableQuery);
@@ -58,6 +103,10 @@ async function creatTablesIfNotExist()
     await client.query(createRequestReviewersIndex);
     await client.query(createLogs);
     await client.query(createLogsIndex);
+    await client.query(createCommentTableQuery);
+    await client.query(createReviewCommentsTableQuery);
+    await client.query(createAssigneesTableQuery);
+    await client.query(createTaskTableQuery);
     await client.end();
 }
 
