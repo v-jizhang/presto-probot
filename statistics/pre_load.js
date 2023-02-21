@@ -59,9 +59,9 @@ async function preLoadPullRequestsAndIssues(app)
             return;
         }
 
-        // preload 80 PRs per hour
+        // preload 100 PRs per hour
         let retryCount = 3;
-        for (let i = 0; i < 80; i++) {
+        for (let i = 0; i < 100; i++) {
             if (startNumber >= endNumber) {
                 // Loading is done, update task
                 await client.query(updateLastPreloadingTask,
