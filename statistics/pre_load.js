@@ -288,6 +288,7 @@ async function preloadCommon(issue, issueNum, client, app, octokit, repo)
         }
 
         for (let i = 0; i < assignees.length; i++) {
+            app.log.info(insertIntoAssignees + assignees[i] + ". Number " + issueNum);
             await client.query(insertIntoAssignees,
                 [issueNum, assignees[i].login, "assignee"]);
         }
