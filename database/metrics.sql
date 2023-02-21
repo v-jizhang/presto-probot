@@ -389,9 +389,9 @@ DECLARE
 BEGIN
     FOR rec IN
     (
-        SELECT pr.id AS pull_request_id, pr.created_at AS response_time FROM pull_requests pr WHERE pr.is_pull_request = true
+        SELECT pr.id AS pull_request_id, pr.created_at AS response_time FROM pull_requests pr
         JOIN pr_labels lb ON pr.id = lb.pull_request_id
-        WHERE lb.label = labelName
+        WHERE lb.label = labelName AND pr.is_pull_request = true
 
         UNION
         SELECT r.pull_request_id, r.submitted_at FROM pr_reviews r
@@ -442,9 +442,9 @@ DECLARE
 BEGIN
     FOR rec IN
     (
-        SELECT pr.id AS pull_request_id, pr.created_at AS response_time FROM pull_requests pr WHERE pr.is_pull_request = true
+        SELECT pr.id AS pull_request_id, pr.created_at AS response_time FROM pull_requests pr
         JOIN pr_labels lb ON pr.id = lb.pull_request_id
-        WHERE lb.label = labelName
+        WHERE lb.label = labelName AND pr.is_pull_request = true
 
         UNION ALL
         SELECT r.pull_request_id, r.submitted_at FROM pr_reviews r
