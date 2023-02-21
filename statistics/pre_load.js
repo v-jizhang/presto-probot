@@ -264,7 +264,10 @@ async function preloadIssueSpecific(issue, issueNum, client, app, octokit, repo)
     const updated_at = issue.data.updated_at;
     const closedAt = issue.data.closed_at;
     const status = issue.data.state;
-    const closedBy = issue.data.closed_by.login;
+    let closedBy = null;
+    if (issue.data.closed_by) {
+        closedBy = issue.data.closed_by.login;
+    }
 
     try {
         await client.query(insertIntoIssue,
