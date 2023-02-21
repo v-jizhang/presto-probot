@@ -95,7 +95,8 @@ BEGIN
     FROM
     (SELECT pull_request_id, min(submitted_at) AS first_review_time
         FROM pr_reviews GROUP BY pull_request_id) AS first_review
-    JOIN pull_requests pr ON pr.id = first_review.pull_request_id;
+    JOIN pull_requests pr ON pr.id = first_review.pull_request_id
+    WHERE pr.is_pull_request=true;
 
     -- RAISE INFO 'DEBUG: avergeReviewTime: %s', avergeReviewTime;
 
@@ -117,7 +118,7 @@ BEGIN
         FROM pr_reviews GROUP BY pull_request_id) AS first_review
     JOIN pull_requests pr ON pr.id = first_review.pull_request_id
     JOIN pr_labels lb ON pr.id = lb.pull_request_id
-    where lb.label = labelName;
+    where lb.label = labelName  AND pr.is_pull_request=true;
 
     -- RAISE INFO 'DEBUG: avergeReviewTime: %s', avergeReviewTime;
 
@@ -140,7 +141,8 @@ BEGIN
     FROM
     (SELECT pull_request_id, min(submitted_at) AS first_review_time
         FROM pr_reviews GROUP BY pull_request_id) AS first_review
-    JOIN pull_requests pr ON pr.id = first_review.pull_request_id;
+    JOIN pull_requests pr ON pr.id = first_review.pull_request_id
+    WHERE pr.is_pull_request = true;
 
     SELECT array_length(prFirstReviewTimeIntervals, 1) INTO numOfPrReviewed;
     i := 1 + numOfPrReviewed * p / 100;  -- 1 based
@@ -165,7 +167,7 @@ BEGIN
         FROM pr_reviews GROUP BY pull_request_id) AS first_review
     JOIN pull_requests pr ON pr.id = first_review.pull_request_id
     JOIN pr_labels lb ON pr.id = lb.pull_request_id
-    where lb.label = labelName;
+    where lb.label = labelName and pr.is_pull_request = true;
 
     SELECT array_length(prFirstReviewTimeIntervals, 1) INTO numOfPrReviewed;
     i := 1 + numOfPrReviewed * p / 100;  -- 1 based
@@ -187,7 +189,8 @@ BEGIN
         FROM pr_reviews
         WHERE pr_reviews.state = 'approved'
         GROUP BY pull_request_id) AS first_approval
-    JOIN pull_requests pr ON pr.id = first_approval.pull_request_id;
+    JOIN pull_requests pr ON pr.id = first_approval.pull_request_id
+    WHERE pr.is_pull_request = true;
 
     -- RAISE INFO 'DEBUG: avergeApprovalTime: %s', avergeApprovalTime;
 
@@ -211,7 +214,7 @@ BEGIN
         GROUP BY pull_request_id) AS first_approval
     JOIN pull_requests pr ON pr.id = first_approval.pull_request_id
     JOIN pr_labels lb ON pr.id = lb.pull_request_id
-    WHERE lb.label = labelName;
+    WHERE lb.label = labelName and pr.is_pull_request = true;
 
     -- RAISE INFO 'DEBUG: avergeApprovalTime: %s', avergeApprovalTime;
 
@@ -236,7 +239,8 @@ BEGIN
         FROM pr_reviews
         WHERE pr_reviews.state = 'approved'
         GROUP BY pull_request_id) AS first_approval
-    JOIN pull_requests pr ON pr.id = first_approval.pull_request_id;
+    JOIN pull_requests pr ON pr.id = first_approval.pull_request_id
+    WHERE pr.is_pull_request = true;
 
     --RAISE INFO 'DEBUG: avergeApprovalTimeIntervals: %s', avergeApprovalTimeIntervals;
 
@@ -265,7 +269,7 @@ BEGIN
         GROUP BY pull_request_id) AS first_approval
     JOIN pull_requests pr ON pr.id = first_approval.pull_request_id
     JOIN pr_labels lb ON pr.id = lb.pull_request_id
-    WHERE lb.label = labelName;
+    WHERE lb.label = labelName and pr.is_pull_request = true;
 
     --RAISE INFO 'DEBUG: avergeApprovalTimeIntervals: %s', avergeApprovalTimeIntervals;
 
@@ -290,7 +294,7 @@ DECLARE
 BEGIN
     FOR rec IN
     (
-        SELECT id AS pull_request_id, created_at AS response_time FROM pull_requests
+        SELECT id AS pull_request_id, created_at AS response_time FROM pull_requests WHERE is_pull_request = true
 
         UNION ALL
         SELECT pull_request_id, submitted_at FROM pr_reviews
@@ -337,7 +341,7 @@ DECLARE
 BEGIN
     FOR rec IN
     (
-        SELECT id AS pull_request_id, created_at AS response_time FROM pull_requests
+        SELECT id AS pull_request_id, created_at AS response_time FROM pull_requests WHERE is_pull_request = true
 
         UNION ALL
         SELECT pull_request_id, submitted_at FROM pr_reviews
@@ -385,7 +389,7 @@ DECLARE
 BEGIN
     FOR rec IN
     (
-        SELECT pr.id AS pull_request_id, pr.created_at AS response_time FROM pull_requests pr
+        SELECT pr.id AS pull_request_id, pr.created_at AS response_time FROM pull_requests pr WHERE pr.is_pull_request = true
         JOIN pr_labels lb ON pr.id = lb.pull_request_id
         WHERE lb.label = labelName
 
@@ -438,7 +442,7 @@ DECLARE
 BEGIN
     FOR rec IN
     (
-        SELECT pr.id AS pull_request_id, pr.created_at AS response_time FROM pull_requests pr
+        SELECT pr.id AS pull_request_id, pr.created_at AS response_time FROM pull_requests pr WHERE pr.is_pull_request = true
         JOIN pr_labels lb ON pr.id = lb.pull_request_id
         WHERE lb.label = labelName
 
