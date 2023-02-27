@@ -90,7 +90,7 @@ Now the app is running and listening on port# 3000.
     * Visit http://localhost:3000
     * On the page click Register Github app.
     * Give an app name that is not taken already. In our case, it is prestoprobot.
-    * After registering your GitHub App, you'll be redirected to install the app on any repositories. At the same time, you can check your local .env and notice it will be populated with all the data you need.
+    * After registering your GitHub App, you'll be redirected to install the app on any repositories. At the same time, you can check your local .env and notice it has been populated with all the data you need.
 
 ### Installing prestoprobot
 

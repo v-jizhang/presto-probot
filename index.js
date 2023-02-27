@@ -17,7 +17,7 @@ const { preLoadPullRequestsAndIssues } = require('./statistics/pre_load')
 
 module.exports = (app) => {
   // Create tables if not exist
-  creatTablesIfNotExist();
+  creatTablesIfNotExist(app);
 
   app.on("issues.opened", async (context) => {
     const issueComment = context.issue({

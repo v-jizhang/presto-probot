@@ -1,6 +1,6 @@
 const { getDatabaseClient } = require('./postgresql')
 
-async function creatTablesIfNotExist()
+async function creatTablesIfNotExist(app)
 {
     const client = await getDatabaseClient();
     let createPullRequestTableQuery = `CREATE TABLE IF NOT EXISTS pull_requests(
@@ -96,6 +96,7 @@ async function creatTablesIfNotExist()
         description TEXT
     );`;
 
+    app.log.info('Creating tables if not exists...')
     await client.query(createPullRequestTableQuery);
     await client.query(createPullRequestReviewTableQuery);
     await client.query(createPullRequestLabelTableQuery);
@@ -108,6 +109,7 @@ async function creatTablesIfNotExist()
     await client.query(createAssigneesTableQuery);
     await client.query(createTaskTableQuery);
     await client.end();
+    app.log.info('Done creating tables if not exists.')
 }
 
 module.exports = {creatTablesIfNotExist}

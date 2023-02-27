@@ -1,0 +1,23 @@
+service: prestobot
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-2
+
+functions:
+  router:
+    handler: handler.webhooks
+
+    environment:
+      APP_ID: ${ssm:/APPID}
+      DATABASE_URL: ${ssm:/DATABASE_URL}
+      WEBHOOK_SECRET: ${ssm:/WEBHOOK_SECRET}
+      PRIVATE_KEY: ${ssm:/PRIVATE_KEY}
+      GITHUB_TOKEN: ${ssm:/GITHUB_TOKEN}
+      LOG_FORMAT: json
+
+    events:
+      - http:
+          path: /api/github/webhooks
+          method: post
