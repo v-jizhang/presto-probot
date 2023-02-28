@@ -258,5 +258,5 @@ Comment a PR with "@prestobot kick off tests" will rerun the failed tests.
 * Load issue and pull request data to database
 
 Connect to Perstobot database and insert a row into tasks table:
-`insert into tasks (task, param, status) values('preload', '{"start_num": <start_num>, "end_num": <end_num, "overwrite": true}', 'open');`
-For example, `insert into tasks (task, param, status) values('preload', '{"start_num": 1, "end_num": 19090, "overwrite": true}', 'open');` will start loading data for issues and pull requests from number 1 to number 19090.
+`insert into tasks (task, param, status) values('preload', '{"start_num": <start_num>, "end_num": <end_num>, "overwrite": true}', 'open');`
+For example, `insert into tasks (task, param, status) values('preload', '{"start_num": 1, "end_num": 19090, "overwrite": true}', 'open');` will start loading data for issues and pull requests from number 1 to number 19090(exclusive).
